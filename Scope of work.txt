@@ -1,0 +1,53 @@
+Project Name: Udemy Clone with Admin Panel
+Features for Users (Students):
+1.	Home Page:
+o	Browse featured and trending courses.
+o	Search bar with filters (category, rating, price, level).
+2.	Course Listings:
+o	Categorized and tagged courses for easy navigation.
+o	View course details, including syllabus, instructor bio, reviews, and ratings.
+3.	Course Player:
+o	Interactive video player with playback controls.
+o	Support for subtitles and notes.
+o	Track progress and resume courses where left off.
+4.	Account Management:
+o	Create and manage user profiles.
+o	View enrolled courses and learning history.
+5.	Wishlist and Favorites:
+o	Save courses to wishlist for future enrollment.
+6.	Ratings and Reviews:
+o	Submit and view ratings and reviews for courses.
+o	Feedback system for course improvement.
+7.	Certificate Generation:
+o	Download certificates upon course completion.
+8.	Notifications and Announcements:
+o	Receive notifications about updates, new courses, or promotional offers.
+9.	Multi-Language Support:
+o	Choose from multiple languages for a localized experience.
+10.	Mobile-Friendly Design:
+o	Fully responsive interface for seamless learning on any device.
+________________________________________
+Features for Instructors:
+1.	Course Creation and Management:
+o	Upload videos, quizzes, and course materials.
+o	Define course structure and pricing.
+o	Monitor course performance with analytics.
+2.	Student Interaction:
+o	Answer student questions via Q&A sections.
+o	Post announcements for enrolled students.
+3.	Profile Management:
+o	Create and update instructor profiles with bio, qualifications, and photo.
+________________________________________
+Admin Panel Features:
+1.	Dashboard:
+o	Overview of platform performance (enrollments, revenue, and course metrics).
+2.	User Management:
+o	View, edit, or deactivate user and instructor accounts.
+o	Monitor activity and resolve disputes.
+3.	Course Management:
+o	Approve or reject instructor-submitted courses.
+o	Edit or remove inappropriate content.
+4.	Category and Tag Management:
+o	Add, edit, or remove course categories and tags.
+5.	Review Moderation:
+o	Approve or delete reviews to ensure quality.
