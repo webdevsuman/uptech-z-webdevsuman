@@ -11,6 +11,7 @@ export enum SubjectEnum {
   TAGS = 'tags',
   REVIEWS = 'reviews',
   PROFILE = 'profile',
+  CMS = 'cms',
 }
 
 

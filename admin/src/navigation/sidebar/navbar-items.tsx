@@ -6,6 +6,7 @@ import {
   DocsIcon,
   GridIcon,
   ListIcon,
+  PageIcon,
   ShootingStarIcon,
   UserCircleIcon,
 } from "@/icons/index";
@@ -66,6 +67,12 @@ export const othersNavItems: NavItem[] = [
     name: "Reviews",
     path: ROUTES.reviews.list,
     subject: SubjectEnum.REVIEWS,
+  },
+  {
+    icon: <PageIcon />,
+    name: "Homepage CMS",
+    path: ROUTES.cms.homepage,
+    subject: SubjectEnum.CMS,
   },
 ];
 

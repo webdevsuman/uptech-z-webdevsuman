@@ -53,4 +53,7 @@ export const endpoints = {
     list: 'admin/reviews',
     details: (id: string) => `admin/reviews/${id}`,
   },
+  cms: {
+    homepage: 'v2/homepage',
+  },
 };

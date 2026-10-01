@@ -15,7 +15,7 @@ export const ROUTES = {
   },
 
   profile: {
-    profile: `${EROUTES.dashboard}profile`,
+    profile: `${EROUTES.profile}`,
   },
 
   // UpTech-Z LMS Modules
@@ -37,5 +37,9 @@ export const ROUTES = {
 
   reviews: {
     list: '/reviews',
+  },
+
+  cms: {
+    homepage: `${EROUTES.cms}/homepage`,
   },
 };
