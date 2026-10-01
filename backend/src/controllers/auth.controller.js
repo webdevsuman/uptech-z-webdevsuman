@@ -414,7 +414,7 @@ class AuthController {
       user.resetTokenExpiryTime = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
       await user.save();
 
-      const resetUrl = `${frontendUrl}/reset-password?token=${rawResetToken}&id=${user._id}`;
+      const resetUrl = `${frontendUrl}/auth/reset-password?token=${rawResetToken}&id=${user._id}`;
 
       
       await sendEmail({

@@ -11,6 +11,7 @@ export const ROUTES = {
     login: `${EROUTES.auth}/signin`,
     signup: `${EROUTES.auth}/signup`,
     'forgot-password': `${EROUTES.auth}/forgot-password`,
+    'reset-password': `${EROUTES.auth}/reset-password`,
   },
 
   profile: {

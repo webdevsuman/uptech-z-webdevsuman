@@ -19,3 +19,32 @@ export const loginZodSchema = z.object({
 });
 
 export type TLoginFormData = z.infer<typeof loginZodSchema>;
+
+export const forgotPasswordZodSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .min(1, "Email is required")
+    .regex(regex.email, "Please enter a valid email address"),
+});
+
+export type TForgotPasswordFormData = z.infer<typeof forgotPasswordZodSchema>;
+
+export const resetPasswordZodSchema = z
+  .object({
+    password: z
+      .string().trim()
+      .min(1, "Password is required")
+      .min(8, "Password must be at least 8 characters long")
+      .regex(
+        regex.password,
+        "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)"
+      ),
+    confirmPassword: z.string().trim().min(1, "Please confirm your password"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+export type TResetPasswordFormData = z.infer<typeof resetPasswordZodSchema>;

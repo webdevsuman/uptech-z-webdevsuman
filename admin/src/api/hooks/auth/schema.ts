@@ -22,6 +22,7 @@ export type TAuthPayload = {
     email: string;
   };
   'reset-password': {
+    userId: string;
     token: string;
     newPassword: string;
   };
