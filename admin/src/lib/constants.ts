@@ -5,6 +5,7 @@ export const accessTokenKey = process.env.NEXT_APP_TOKEN_NAME!;
 export const refreshTokenKey = process.env.NEXT_APP_REFRESH_TOKEN_NAME!;
 
 export const rememberMeKey = process.env.NEXT_APP_REMEMBER_ME_KEY_NAME!;
+export const encryptionKey = process.env.NEXT_APP_ENCRYPTION_KEY_NAME!;
 
 export const baseUrlApi = `${baseURL}/api/`;
 export const baseUrlMedia = `${baseURL}/uploads/`;

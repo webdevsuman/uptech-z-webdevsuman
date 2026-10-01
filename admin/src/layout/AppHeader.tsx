@@ -100,8 +100,8 @@ const AppHeader: React.FC = () => {
               alt="Logo"
             /> */}
             <div className="flex items-center gap-2">
-              {/* <Image src={projectConfig.logo} alt="Logo" width={20} height={20} /> */}
-               <h1 className="text-2xl font-black dark:text-gray-300">{projectConfig.name}</h1>
+              <Image src={projectConfig.logo} alt="Logo" width={154} height={32} />
+               {/* <h1 className="text-2xl font-black dark:text-gray-300">{projectConfig.name}</h1> */}
             </div>
           </Link>
 

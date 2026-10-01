@@ -5,14 +5,101 @@ import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
 import Link from "next/link";
-import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { loginZodSchema, TLoginFormData } from "./auth.zod";
+import { useLogin } from "@/api/hooks/auth/hooks";
+import { ROUTES } from "@/navigation/sidebar/routes";
+
+import { useAuth } from "@/context/AuthContext";
+import { rememberMeKey } from "@/lib/constants";
+import { decryptData, encryptData } from "@/lib/functions/crypto.lib";
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
+  const router = useRouter();
+  const { setUser } = useAuth();
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<TLoginFormData>({
+    resolver: zodResolver(loginZodSchema),
+    mode:"all",
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const { mutate: login, isPending } = useLogin();
+
+  // Load remembered credentials on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(rememberMeKey);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.email) {
+          setValue("email", parsed.email, { shouldValidate: true });
+        }
+        if (parsed.password) {
+          decryptData(parsed.password).then((plainPassword) => {
+            if (plainPassword) {
+              setValue("password", plainPassword, { shouldValidate: true });
+            }
+          });
+        }
+        setIsChecked(true);
+      } catch {
+        localStorage.removeItem(rememberMeKey);
+      }
+    }
+  }, [setValue]);
+
+  const handleCheckboxChange = (checked: boolean) => {
+    setIsChecked(checked);
+  };
+
+  const onSubmit = (data: TLoginFormData) => {
+    login(data, {
+      onSuccess: async (res) => {
+        if (res?.data) {
+          setUser({
+            id: res.data.id,
+            name: res.data.name,
+            email: res.data.email,
+            role: res.data.role,
+            isVerified: res.data.isVerified,
+          });
+        }
+
+        if (isChecked) {
+          const encryptedPassword = await encryptData(data.password);
+          localStorage.setItem(
+            rememberMeKey,
+            JSON.stringify({
+              email: data.email,
+              password: encryptedPassword,
+            })
+          );
+        } else {
+          localStorage.removeItem(rememberMeKey);
+        }
+
+        router.push(ROUTES.dashboard);
+      },
+    });
+  };
+
   return (
     <div className="flex flex-col flex-1 lg:w-1/2 w-full">
-      <div className="w-full max-w-md sm:pt-10 mx-auto mb-5">
+      {/* <div className="w-full max-w-md sm:pt-10 mx-auto mb-5">
         <Link
           href="/"
           className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
@@ -20,7 +107,7 @@ export default function SignInForm() {
           <ChevronLeftIcon />
           Back to dashboard
         </Link>
-      </div>
+      </div> */}
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
         <div>
           <div className="mb-5 sm:mb-8">
@@ -32,7 +119,7 @@ export default function SignInForm() {
             </p>
           </div>
           <div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5">
+            {/* <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5">
               <button className="inline-flex items-center justify-center gap-3 py-3 text-sm font-normal text-gray-700 transition-colors bg-gray-100 rounded-lg px-7 hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10">
                 <svg
                   width="20"
@@ -83,14 +170,21 @@ export default function SignInForm() {
                   Or
                 </span>
               </div>
-            </div>
-            <form>
+            </div> */}
+            <form onSubmit={handleSubmit(onSubmit)} noValidate>
               <div className="space-y-6">
                 <div>
                   <Label>
                     Email <span className="text-error-500">*</span>{" "}
                   </Label>
-                  <Input placeholder="info@gmail.com" type="email" />
+                  <Input
+                    placeholder="info@gmail.com"
+                    type="email"
+                    {...register("email")}
+                    error={!!errors.email}
+                    hint={errors.email?.message}
+                    disabled={isPending}
+                  />
                 </div>
                 <div>
                   <Label>
@@ -100,6 +194,10 @@ export default function SignInForm() {
                     <Input
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
+                      {...register("password")}
+                      error={!!errors.password}
+                      hint={errors.password?.message}
+                      disabled={isPending}
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
@@ -115,27 +213,27 @@ export default function SignInForm() {
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Checkbox checked={isChecked} onChange={setIsChecked} />
+                    <Checkbox checked={isChecked} onChange={handleCheckboxChange} />
                     <span className="block font-normal text-gray-700 text-theme-sm dark:text-gray-400">
-                      Keep me logged in
+                      Remember me
                     </span>
                   </div>
                   <Link
-                    href="/reset-password"
+                    href={ROUTES.auth['forgot-password']}
                     className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
                   >
                     Forgot password?
                   </Link>
                 </div>
                 <div>
-                  <Button className="w-full" size="sm">
-                    Sign in
+                  <Button className="w-full" size="sm" disabled={isPending}>
+                    {isPending ? "Signing in..." : "Sign in"}
                   </Button>
                 </div>
               </div>
             </form>
 
-            <div className="mt-5">
+            {/* <div className="mt-5">
               <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
                 Don&apos;t have an account? {""}
                 <Link
@@ -145,7 +243,7 @@ export default function SignInForm() {
                   Sign Up
                 </Link>
               </p>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

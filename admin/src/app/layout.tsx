@@ -7,6 +7,8 @@ import NextTopLoader from "nextjs-toploader";
 import { TanstackQueryProvider } from '@/context/TanstackQueryProvider';
 import { Toaster } from 'sonner';
 
+import { AuthProvider } from '@/context/AuthContext';
+
 const outfit = Outfit({
   subsets: ["latin"],
 });
@@ -22,8 +24,10 @@ export default function RootLayout({
         <NextTopLoader height={4} showSpinner={false} />
         <ThemeProvider>
           <TanstackQueryProvider>
-          <SidebarProvider>{children}</SidebarProvider>
-          <Toaster position="top-right" richColors />
+            <AuthProvider>
+              <SidebarProvider>{children}</SidebarProvider>
+              <Toaster position="top-right" richColors />
+            </AuthProvider>
           </TanstackQueryProvider>
         </ThemeProvider>
       </body>

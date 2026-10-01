@@ -240,8 +240,8 @@ const AppSidebar: React.FC = () => {
                 width={150}
                 height={40}
               /> */}
-              {/* <Image src={projectConfig.logo} alt="Logo" width={20} height={20} className="text-blue-900 fill-blue-900" /> */}
-              <h1 className="text-2xl font-black dark:text-gray-300">{projectConfig.name}</h1>
+              <Image src={projectConfig.logo} alt="Logo" width={200} height={32}/>
+              {/* <h1 className="text-2xl font-black dark:text-gray-300">{projectConfig.name}</h1> */}
             </div>
           ) : (
             <Image

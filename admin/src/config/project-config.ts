@@ -5,9 +5,10 @@ import packageJson from '../../package.json';
 const projectName = formatLabel(packageJson.name);
 
 export const projectConfig = {
-  logo: './Logo.svg',
+  logo: '/Logo.svg',
   name: projectName,
   domain: packageJson.name,
   version: packageJson.version,
+  description: packageJson.description,
   url: new URL(ROUTES['ui-url']),
 };
