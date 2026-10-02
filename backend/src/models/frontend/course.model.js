@@ -42,6 +42,41 @@ const courseSchema = new mongoose.Schema(
       enum: ["draft", "under_review", "published"],
       default: "draft",
     },
+
+    // Discovery & Highlights
+    isFeatured: { type: Boolean, default: false },
+    isTrending: { type: Boolean, default: false },
+    viewsCount: { type: Number, default: 0, min: 0 },
+
+    // Curriculum & Syllabus
+    sections: [
+      {
+        title: { type: String, required: true, trim: true },
+        order: { type: Number, default: 1 },
+        lectures: [
+          {
+            title: { type: String, required: true, trim: true },
+            description: { type: String, default: "" },
+            order: { type: Number, default: 1 },
+            isPreview: { type: Boolean, default: false },
+            video: {
+              url: { type: String, default: "" },
+              public_id: { type: String, default: "" },
+              duration: { type: Number, default: 0 },
+            },
+            resources: [
+              {
+                title: { type: String, required: true },
+                url: { type: String, required: true },
+                public_id: { type: String, default: "" },
+                fileType: { type: String, default: "pdf" },
+                fileSize: { type: Number, default: 0 },
+              },
+            ],
+          },
+        ],
+      },
+    ],
   },
   { timestamps: true, versionKey: false }
 );

@@ -28,46 +28,26 @@ interface CourseItem {
   status: "published" | "draft" | "under_review";
 }
 
-const sampleCourses: CourseItem[] = [
-  {
-    id: "c-1",
-    title: "Complete Modern Full-Stack Web Development Bootcamp",
-    category: "Web Development",
-    studentsCount: 642,
-    rating: 4.9,
-    price: 89.99,
-    status: "published",
-  },
-  {
-    id: "c-2",
-    title: "Mastering React 19 & Next.js 16 with TypeScript",
-    category: "Frontend",
-    studentsCount: 385,
-    rating: 4.8,
-    price: 69.99,
-    status: "published",
-  },
-  {
-    id: "c-3",
-    title: "Cloud Architecture & Docker Deployment Essentials",
-    category: "DevOps & Cloud",
-    studentsCount: 154,
-    rating: 4.7,
-    price: 49.99,
-    status: "under_review",
-  },
-  {
-    id: "c-4",
-    title: "Advanced Node.js Microservices and System Design",
-    category: "Backend",
-    studentsCount: 0,
-    rating: 0,
-    price: 79.99,
-    status: "draft",
-  },
-];
+import { useInstructorCourses } from "@/hooks/react-query/useInstructorCourses";
+import { ICourse } from "@/typescript/interface/course.interface";
 
 export const InstructorRecentCourses: React.FC = () => {
+  const { data: realCourses, isLoading } = useInstructorCourses();
+
+  const coursesToDisplay = (realCourses && realCourses.length > 0)
+    ? realCourses.slice(0, 5).map((c: ICourse) => ({
+        id: c._id || c.id || "",
+        title: c.title,
+        category:
+          typeof c.category === "object" && c.category !== null
+            ? c.category.name
+            : "General",
+        studentsCount: 0,
+        rating: c.rating ?? 0,
+        price: c.price ?? 0,
+        status: (c.status || "draft") as "published" | "draft" | "under_review",
+      }))
+    : [];
   const getStatusChip = (status: CourseItem["status"]) => {
     switch (status) {
       case "published":
@@ -207,12 +187,25 @@ export const InstructorRecentCourses: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {sampleCourses.map((course) => (
-                <TableRow
-                  key={course.id}
-                  hover
-                  sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                >
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={6} sx={{ textAlign: "center", py: 3, color: "text.secondary" }}>
+                    Loading recent courses...
+                  </TableCell>
+                </TableRow>
+              ) : coursesToDisplay.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} sx={{ textAlign: "center", py: 3, color: "text.secondary" }}>
+                    No courses created yet. Click &quot;New Course&quot; to get started.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                coursesToDisplay.map((course) => (
+                  <TableRow
+                    key={course.id}
+                    hover
+                    sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                  >
                   <TableCell sx={{ maxWidth: 220, py: 1.5 }}>
                     <Typography
                       variant="body2"
@@ -277,7 +270,7 @@ export const InstructorRecentCourses: React.FC = () => {
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))}
+              )))}
             </TableBody>
           </Table>
         </TableContainer>

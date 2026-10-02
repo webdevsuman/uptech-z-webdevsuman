@@ -59,4 +59,42 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
+//For course view counts by anonymous viewers
+export const optionalAuthMiddleware = async (req, res, next) => {
+  const authHeader = req.headers.authorization || req.headers["x-access-token"];
+
+  const token = authHeader?.startsWith("Bearer ")
+    ? authHeader.split(" ")[1]
+    : authHeader || req.query?.token || req.body?.token;
+
+  if (!token) {
+    req.user = null;
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, jwtSecret);
+
+    const user = await User.findById(decoded.id)
+      .select("-password -refreshToken -resetToken")
+      .populate({
+        path: "role",
+        populate: {
+          path: "permissions",
+          select: "name",
+        },
+      });
+
+    if (user && user.isActive && user.isVerified) {
+      req.user = user;
+    } else {
+      req.user = null;
+    }
+  } catch (_error) {
+    req.user = null;
+  }
+
+  return next();
+};
+
 export default authMiddleware;

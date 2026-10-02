@@ -20,4 +20,35 @@ export const endpoints = {
   cms: {
     homepage: "v2/homepage",
   },
+  categories: {
+    list: "categories",
+  },
+  courses: {
+    list: "courses",
+    create: "courses",
+    instructorList: "courses/instructor",
+    featured: "courses/featured",
+    trending: "courses/trending",
+    details: (id: string) => `courses/${id}`,
+    update: (id: string) => `courses/${id}`,
+    delete: (id: string) => `courses/${id}`,
+    // Curriculum endpoints
+    addSection: (id: string) => `courses/${id}/sections`,
+    updateSection: (id: string, sectionId: string) => `courses/${id}/sections/${sectionId}`,
+    deleteSection: (id: string, sectionId: string) => `courses/${id}/sections/${sectionId}`,
+    addLecture: (id: string, sectionId: string) => `courses/${id}/sections/${sectionId}/lectures`,
+    updateLecture: (id: string, sectionId: string, lectureId: string) =>
+      `courses/${id}/sections/${sectionId}/lectures/${lectureId}`,
+    deleteLecture: (id: string, sectionId: string, lectureId: string) =>
+      `courses/${id}/sections/${sectionId}/lectures/${lectureId}`,
+    addLectureResource: (id: string, sectionId: string, lectureId: string) =>
+      `courses/${id}/sections/${sectionId}/lectures/${lectureId}/resources`,
+    deleteLectureResource: (
+      id: string,
+      sectionId: string,
+      lectureId: string,
+      resourceId: string
+    ) =>
+      `courses/${id}/sections/${sectionId}/lectures/${lectureId}/resources/${resourceId}`,
+  },
 };

@@ -11,7 +11,7 @@ import CategoryCourseCard from "./CategoryCourseCard";
 // Swiper imports
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
-import { CourseFilters } from "@/typescript/interface/courseFilters";
+import { CourseFilters } from "@/typescript/interface/course.interface";
 import Link from "next/link";
 
 export default function CourseList({ filters }: { filters: CourseFilters }) {
@@ -47,13 +47,16 @@ export default function CourseList({ filters }: { filters: CourseFilters }) {
           1024: { slidesPerView: 3 }, // Desktop
         }}
       >
-        {courses.map((course) => (
-          <SwiperSlide key={course.id}>
-            <Link href={`/courses/${course.id}`}>
-              <CategoryCourseCard course={course} />
-            </Link>
-          </SwiperSlide>
-        ))}
+        {courses.map((course) => {
+          const courseId = course._id || course.id;
+          return (
+            <SwiperSlide key={courseId}>
+              <Link href={`/courses/${courseId}`}>
+                <CategoryCourseCard course={course} />
+              </Link>
+            </SwiperSlide>
+          );
+        })}
       </Swiper>
     </>
   );

@@ -72,27 +72,27 @@ export default function HomePage() {
 
         {/* Categories */}
         <div className="md:px-20 px-5">
-          {/* <CategorySection
+          <CategorySection
             title={sectionMap.category?.title}
             description={sectionMap.category?.description}
             onSelect={handleCategorySelect}
-          /> */}
+          />
           <div id="courses" className="py-5">
-            {/* <CourseList filters={filters} /> */}
+            <CourseList filters={filters} />
           </div>
         </div>
 
         {/* Featured Courses */}
-        {/* <FeaturedCourses
+        <FeaturedCourses
           title={sectionMap.featured?.title}
           description={sectionMap.featured?.description}
-        /> */}
+        />
 
         {/* Trending Courses */}
-        {/* <TrendingCourses
+        <TrendingCourses
           title={sectionMap.trending?.title}
           description={sectionMap.trending?.description}
-        /> */}
+        />
       </main>
     </>
   );

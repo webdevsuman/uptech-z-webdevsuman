@@ -1,6 +1,7 @@
 "use client";
 import { Box, TextField, MenuItem, Grid, Button } from "@mui/material";
 import { useForm, Controller } from "react-hook-form";
+import { useCategories } from "@/hooks/react-query/useCategories";
 import { TitleSubheading } from "../TitleSubheading";
 
 interface SearchFilters {
@@ -17,7 +18,7 @@ export default function SearchBar({
 }: {
   onSearch: (filters: SearchFilters) => void;
 }) {
-  const categories = ["All", "Development", "Design", "Marketing", "Business"];
+  const { data: categories, isLoading: isCategoriesLoading } = useCategories();
   const ratings = ["Any", "4★ & above", "3★ & above"];
   const prices = ["All", "Free", "Paid"];
   const levels = ["All", "Beginner", "Intermediate", "Advanced"];
@@ -33,7 +34,15 @@ export default function SearchBar({
   });
 
   const onSubmit = (data: SearchFilters) => {
-    onSearch(data); // send filters to parent
+    const selectedCat = categories?.find(
+      (c) => c._id === data.category || c.name === data.category
+    );
+    const resolvedFilters: SearchFilters = {
+      ...data,
+      categoryId: data.category === "All" ? undefined : selectedCat?._id,
+      category: selectedCat ? selectedCat.name : data.category,
+    };
+    onSearch(resolvedFilters); // send filters to parent
     //Scroll to course list part
     const targetElement = document.getElementById("courses");
     if (targetElement) {
@@ -91,10 +100,12 @@ export default function SearchBar({
                 label="Category"
                 variant="outlined"
                 size="small"
+                disabled={isCategoriesLoading}
               >
-                {categories.map((cat) => (
-                  <MenuItem key={cat} value={cat}>
-                    {cat}
+                <MenuItem value="All">All Categories</MenuItem>
+                {categories?.map((cat) => (
+                  <MenuItem key={cat._id} value={cat._id}>
+                    {cat.name}
                   </MenuItem>
                 ))}
               </TextField>
@@ -188,6 +199,7 @@ export default function SearchBar({
             onClick={() =>
               reset({
                 search: "",
+                categoryId: undefined,
                 category: "All",
                 rating: "Any",
                 price: "All",
