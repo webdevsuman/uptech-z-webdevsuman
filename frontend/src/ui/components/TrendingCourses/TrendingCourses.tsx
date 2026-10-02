@@ -14,7 +14,15 @@ import { TitleSubheading } from "../TitleSubheading";
 import Link from "next/link";
 import { getImageUrl } from "@/utils/getImageUrl";
 
-export default function TrendingCourses() {
+interface TrendingCoursesProps {
+  title?: string;
+  description?: string;
+}
+
+export default function TrendingCourses({
+  title = "Trending courses",
+  description = "Learners are viewing these courses more",
+}: TrendingCoursesProps) {
   const { data: trending, isLoading, isError } = useTrendingCourses();
 
   if (isLoading) return <CircularProgress />;
@@ -24,10 +32,10 @@ export default function TrendingCourses() {
     );
 
   return (
-    <Container maxWidth="lg" className="!my-20">
+    <Container maxWidth="lg" className="my-20!">
       <TitleSubheading
-        title="Trending courses"
-        subheading="Learners are viewing these courses more"
+        title={title}
+        subheading={description}
       />
 
       <Swiper

@@ -28,7 +28,17 @@ const iconMap: Record<string, JSX.Element> = {
   Camera: <Camera fontSize="large" color="primary" />,
 };
 
-const CategorySection = ({ onSelect }: { onSelect?: (id: string) => void }) => {
+interface CategorySectionProps {
+  title?: string;
+  description?: string;
+  onSelect?: (id: string) => void;
+}
+
+const CategorySection = ({
+  title = "Explore Categories",
+  description = "All the skills you need in one place. From critical skills to technical topics, UpTech-Z supports your professional development.",
+  onSelect,
+}: CategorySectionProps) => {
   const { data: categories, isLoading, error } = useCategories();
 
   if (isLoading) return <Typography>Loading categories...</Typography>;
@@ -38,8 +48,8 @@ const CategorySection = ({ onSelect }: { onSelect?: (id: string) => void }) => {
   return (
     <Box sx={{ my: 6 }}>
       <TitleSubheading
-        title="Explore Categories"
-        subheading="All the skills you need in one place. From critical skills to technical topics, UpTech-Z supports your professional development."
+        title={title}
+        subheading={description}
       />
       <Grid container spacing={3} className="mt-5">
         {categories?.map((cat) => (

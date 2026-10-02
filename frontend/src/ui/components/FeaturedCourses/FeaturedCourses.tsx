@@ -15,7 +15,15 @@ import { TitleSubheading } from "../TitleSubheading";
 import Link from "next/link";
 import { getImageUrl } from "@/utils/getImageUrl";
 
-export default function FeaturedCourses() {
+interface FeaturedCoursesProps {
+  title?: string;
+  description?: string;
+}
+
+export default function FeaturedCourses({
+  title = "Featured courses",
+  description = "Our Top Picks for You",
+}: FeaturedCoursesProps) {
   const { data: featured, isLoading, isError } = useFeaturedCourses();
 
   if (isLoading) return <CircularProgress />;
@@ -25,10 +33,10 @@ export default function FeaturedCourses() {
     );
 
   return (
-    <Container maxWidth="lg" className="!my-20">
+    <Container maxWidth="lg" className="my-20!">
       <TitleSubheading
-        title="Featured courses"
-        subheading="Our Top Picks for You"
+        title={title}
+        subheading={description}
       />
 
       <Swiper

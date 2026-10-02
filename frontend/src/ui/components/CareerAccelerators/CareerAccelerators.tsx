@@ -3,7 +3,15 @@ import React from "react";
 import { TitleSubheading } from "../TitleSubheading";
 import { AcceleratorCard } from "./AcceleratorCard";
 
-export const CareerAccelerators = () => {
+interface CareerAcceleratorsProps {
+  title?: string;
+  description?: string;
+}
+
+export const CareerAccelerators = ({
+  title = "Ready to reimagine your career?",
+  description = "Get the skills and real-world experience employers want with Career Accelerators.",
+}: CareerAcceleratorsProps) => {
   const cardData = [
     {
       id: "1",
@@ -34,11 +42,10 @@ export const CareerAccelerators = () => {
     },
   ];
   return (
-    <Box className="!my-20">
+    <Box className="my-20!">
       <TitleSubheading
-        title="Ready to reimagine your career?"
-        subheading="Get the skills and real-world experience employers want with Career
-        Accelerators."
+        title={title}
+        subheading={description}
       />
       <div className="flex items-center justify-center flex-wrap">
 

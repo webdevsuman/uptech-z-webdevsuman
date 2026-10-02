@@ -1,7 +1,14 @@
 "use client";
 import { Container, Typography, Link, Grid } from "@mui/material";
+import { useHomeAssets } from "@/hooks/react-query/useHomeAssets";
 
 export default function Footer() {
+  const { data } = useHomeAssets();
+  const footerData = data?.find((item) => item.section === "footer");
+
+  const title = footerData?.title || "UpTech-Z";
+  const description = footerData?.description || "Learn anything, anytime, anywhere.";
+
   return (
     <footer id="footer" className="bg-gray-900 text-gray-300 py-8 mt-12">
       <Container maxWidth="lg">
@@ -14,10 +21,10 @@ export default function Footer() {
             }}
           >
             <Typography variant="h6" sx={{ fontWeight: "bold" }} gutterBottom>
-              UpTech-Z
+              {title}
             </Typography>
             <Typography variant="body2">
-              Learn anything, anytime, anywhere.
+              {description}
             </Typography>
           </Grid>
 

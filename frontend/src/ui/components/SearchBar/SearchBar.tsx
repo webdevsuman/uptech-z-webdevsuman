@@ -55,8 +55,10 @@ export default function SearchBar({
       }}
     >
       <div className="mb-8">
-
-      <TitleSubheading title="Looking something specific?" subheading="Search your favourite courses here." />
+        <TitleSubheading
+          title="Looking something specific?"
+          subheading="Search your favourite courses here."
+        />
       </div>
       <Grid container spacing={2}>
         {/* Search Input */}
@@ -175,9 +177,7 @@ export default function SearchBar({
         {/* Buttons */}
         <Grid
           size={{ xs: 12 }}
-          display="flex"
-          justifyContent="flex-end"
-          gap={2}
+          sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}
         >
           <Button type="submit" variant="contained" color="primary">
             Search

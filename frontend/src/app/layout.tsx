@@ -32,9 +32,9 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <AppRouterCacheProvider options={{ enableCssLayer: true }}>
-          <Wrapper>
-            <TanstackProvider>{children}</TanstackProvider>
-          </Wrapper>
+          <TanstackProvider>
+            <Wrapper>{children}</Wrapper>
+          </TanstackProvider>
         </AppRouterCacheProvider>
       </body>
     </html>

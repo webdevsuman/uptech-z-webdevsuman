@@ -10,10 +10,11 @@ export const TitleSubheading = ({
 }) => {
   return (
     <>
-      <Typography variant="h4" fontWeight="bold" gutterBottom>
+      <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
         {title}
       </Typography>
-      <Typography variant="h6" color="gray">
+
+      <Typography variant="h6" sx={{ color: "gray" }}>
         {subheading}
       </Typography>
     </>
