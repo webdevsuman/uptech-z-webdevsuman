@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
 import {
   Box,
   Card,
@@ -11,8 +10,7 @@ import {
   TextField,
   Button,
 } from "@mui/material";
-import { useSelector } from "react-redux";
-import { RootState } from "@/redux-toolkit/store/store";
+import { useAuth } from "@/context/AuthContext";
 
 export interface Review {
   id: string;
@@ -30,50 +28,50 @@ export default function CourseReviews({ courseId }: { courseId: string }) {
   const [loading, setLoading] = useState(false);
 
   // Current logged in user
-  const user = useSelector((state: RootState) => state.auth.user);
+  const { user } = useAuth();
   const userId = user?.id ?? null;
 
   // 🔹 Fetch reviews for this course
-  useEffect(() => {
-    if (!courseId) return;
-    const fetchReviews = async () => {
-      const { data, error } = await supabase
-        .from("reviews")
-        .select("*")
-        .eq("course_id", courseId)
-        .order("created_at", { ascending: false });
-      if (!error && data) setReviews(data as Review[]);
-    };
-    fetchReviews();
-  }, [courseId]);
+  // useEffect(() => {
+  //   if (!courseId) return;
+  //   const fetchReviews = async () => {
+  //     const { data, error } = await supabase
+  //       .from("reviews")
+  //       .select("*")
+  //       .eq("course_id", courseId)
+  //       .order("created_at", { ascending: false });
+  //     if (!error && data) setReviews(data as Review[]);
+  //   };
+  //   fetchReviews();
+  // }, [courseId]);
 
-  // 🔹 Submit review
-  const handleSubmit = async () => {
-    if (!userId) return alert("Login required to leave a review.");
-    if (!newRating) return alert("Please provide a rating");
+  // // 🔹 Submit review
+  // const handleSubmit = async () => {
+  //   if (!userId) return alert("Login required to leave a review.");
+  //   if (!newRating) return alert("Please provide a rating");
 
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("reviews")
-      .insert({
-        user_id: userId,
-        course_id: courseId,
-        rating: newRating,
-        comment: newComment,
-      })
-      .select()
-      .single();
+  //   setLoading(true);
+  //   const { data, error } = await supabase
+  //     .from("reviews")
+  //     .insert({
+  //       user_id: userId,
+  //       course_id: courseId,
+  //       rating: newRating,
+  //       comment: newComment,
+  //     })
+  //     .select()
+  //     .single();
 
-    setLoading(false);
+  //   setLoading(false);
 
-    if (error) {
-      console.error("Error adding review:", error.message);
-    } else if (data) {
-      setReviews([data as Review, ...reviews]); // optimistic update
-      setNewRating(0);
-      setNewComment("");
-    }
-  };
+  //   if (error) {
+  //     console.error("Error adding review:", error.message);
+  //   } else if (data) {
+  //     setReviews([data as Review, ...reviews]); // optimistic update
+  //     setNewRating(0);
+  //     setNewComment("");
+  //   }
+  // };
 
   return (
     <div className="md:px-30 px-5">
@@ -100,7 +98,7 @@ export default function CourseReviews({ courseId }: { courseId: string }) {
             />
             <Button
               variant="contained"
-              onClick={handleSubmit}
+              // onClick={handleSubmit}
               disabled={loading}
             >
               {loading ? "Submitting..." : "Submit Review"}

@@ -4,6 +4,8 @@ import "./globals.css";
 import Wrapper from "../../layout/wrapper/Wrapper";
 import TanstackProvider from "@/utils/TanstackProvider";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
+import { AuthProvider } from "@/context/AuthContext";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,10 +35,14 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <AppRouterCacheProvider options={{ enableCssLayer: true }}>
           <TanstackProvider>
-            <Wrapper>{children}</Wrapper>
+            <AuthProvider>
+              <Toaster richColors position="top-right" />
+              <Wrapper>{children}</Wrapper>
+            </AuthProvider>
           </TanstackProvider>
         </AppRouterCacheProvider>
       </body>
     </html>
   );
 }
+

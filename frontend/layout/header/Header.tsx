@@ -11,15 +11,17 @@ import {
   ListItem,
   ListItemButton,
   ListItemText,
-  Typography,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useState } from "react";
 import DarkModeToggle from "@/ui/DarkModeToggle";
 import Link from "next/link";
+import Image from "next/image";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, role, logout } = useAuth();
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
 
@@ -33,36 +35,78 @@ export default function Header() {
     <>
       <AppBar position="static" color="primary">
         <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-          <Typography component="h1" variant="h6" sx={{fontWeight: "bold"}} className="cursor-pointer">
-            UpTech-Z
-          </Typography>
+          <Link href="/">
+            <Image
+              src="/Logo.svg"
+              alt="Logo"
+              width={200}
+              height={50}
+              priority
+              className="cursor-pointer"
+            />
+          </Link>
 
           {/* Desktop Nav */}
-          <Box sx={{ display: { xs: "none", sm: "block" }, justifySelf:"center",paddingLeft:"150px" }}>
+          <Box
+            sx={{ display: { xs: "none", sm: "flex" }, alignItems: "center", gap: 1 }}
+          >
             {navItems.map((item) => (
               <Link key={item.id} href={item.path}>
                 <Button color="inherit">{item.name}</Button>
               </Link>
             ))}
-            {/* {role == "instructor" && (
-              <Link href={`/instructor/dashboard`}>
+
+            {role === "instructor" && (
+              <Link href="/instructor/dashboard">
                 <Button color="inherit">Dashboard</Button>
               </Link>
             )}
-            {role == "student" && (
-              <Link href={`/student/dashboard`}>
+            {role === "student" && (
+              <Link href="/student/dashboard">
                 <Button color="inherit">Dashboard</Button>
               </Link>
             )}
-            {role == "admin" && (
-              <Link href={`/admin`}>
-                <Button color="inherit">Admin Dashboard</Button>
-              </Link>
-            )} */}
           </Box>
 
           {/* Actions */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            {!user ? (
+              <Box sx={{ display: { xs: "none", sm: "flex" }, alignItems: "center", gap: 1 }}>
+                <Link href="/login">
+                  <Button color="inherit">Login</Button>
+                </Link>
+                <Link href="/register">
+                  <Button
+                    variant="outlined"
+                    sx={{
+                      bgcolor: "white",
+                      color: "black",
+                      borderColor: "white",
+                      "&:hover": { bgcolor: "#f2f2f2", borderColor: "white" },
+                      textTransform: "none",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Sign Up
+                  </Button>
+                </Link>
+              </Box>
+            ) : (
+              <Box sx={{ display: { xs: "none", sm: "flex" }, alignItems: "center", gap: 1 }}>
+                <span className="text-sm font-medium text-white/90">
+                  {user.name} <span className="text-xs opacity-75 capitalize">({role})</span>
+                </span>
+                <Button
+                  color="inherit"
+                  size="small"
+                  onClick={logout}
+                  sx={{ textTransform: "none", ml: 1, border: "1px solid rgba(255,255,255,0.4)" }}
+                >
+                  Logout
+                </Button>
+              </Box>
+            )}
+
             <DarkModeToggle />
             <IconButton
               color="inherit"
@@ -94,9 +138,60 @@ export default function Header() {
                 </ListItem>
               </Link>
             ))}
+
+            {role === "instructor" && (
+              <Link href="/instructor/dashboard">
+                <ListItem disablePadding>
+                  <ListItemButton onClick={handleDrawerToggle}>
+                    <ListItemText primary="Instructor Dashboard" />
+                  </ListItemButton>
+                </ListItem>
+              </Link>
+            )}
+
+            {role === "student" && (
+              <Link href="/student/dashboard">
+                <ListItem disablePadding>
+                  <ListItemButton onClick={handleDrawerToggle}>
+                    <ListItemText primary="Student Dashboard" />
+                  </ListItemButton>
+                </ListItem>
+              </Link>
+            )}
+
+            {!user ? (
+              <>
+                <Link href="/login">
+                  <ListItem disablePadding>
+                    <ListItemButton onClick={handleDrawerToggle}>
+                      <ListItemText primary="Login" />
+                    </ListItemButton>
+                  </ListItem>
+                </Link>
+                <Link href="/register">
+                  <ListItem disablePadding>
+                    <ListItemButton onClick={handleDrawerToggle}>
+                      <ListItemText primary="Sign Up" />
+                    </ListItemButton>
+                  </ListItem>
+                </Link>
+              </>
+            ) : (
+              <ListItem disablePadding>
+                <ListItemButton
+                  onClick={() => {
+                    logout();
+                    handleDrawerToggle();
+                  }}
+                >
+                  <ListItemText primary={`Logout (${user.name})`} />
+                </ListItemButton>
+              </ListItem>
+            )}
           </List>
         </Box>
       </Drawer>
     </>
   );
 }
+

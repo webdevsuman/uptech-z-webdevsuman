@@ -1,9 +1,36 @@
-import { accessTokenName, baseURL, refreshTokenName } from "@/config/constants";
-import { getToken, setToken } from "@/lib/token.lib";
-import axios from "axios";
-import { deleteCookie, getCookie } from "cookies-next";
-import { redirect } from "next/navigation";
-import { baseUrlApi } from "./endpoints";
+import axios, {
+  AxiosError,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from "axios";
+import { baseUrlApi, endpoints } from "./endpoints";
+import {
+  getRefreshToken,
+  getToken,
+  triggerLogout,
+  updateTokens,
+} from "@/lib/token.lib";
+import { sToast } from "@/components/ui/alert/stoast";
+import { IApiResponse, IAuthResponseData } from "@/typescript/interface/auth.interface";
+
+declare module "axios" {
+  export interface AxiosRequestConfig {
+    _retry?: boolean;
+    showSuccessToast?: boolean;
+  }
+}
+
+type TFailedRequest = {
+  reject: (reason?: unknown) => void;
+  config: InternalAxiosRequestConfig;
+  resolve: (value: AxiosResponse | PromiseLike<AxiosResponse>) => void;
+};
+
+let isRefreshing = false;
+let failedQueue: TFailedRequest[] = [];
+const successStatusCodes = [200, 201];
+const defaultMessage = "Something went wrong";
+const refreshTokenEndpoint = endpoints.auth.refreshToken;
 
 const axiosInstance = axios.create({
   baseURL: baseUrlApi,
@@ -12,11 +39,28 @@ const axiosInstance = axios.create({
   },
 });
 
-// 1. Request Interceptor: Attach token dynamically on EVERY request
+const processQueue = (error: AxiosError | null, token: string | null = null) => {
+  failedQueue.forEach((p) => {
+    if (error) {
+      p.reject(error);
+    } else {
+      p.config._retry = true;
+      if (p.config.headers) {
+        p.config.headers["Authorization"] = `Bearer ${token}`;
+        p.config.headers["x-access-token"] = token || "";
+      }
+      p.resolve(axiosInstance(p.config));
+    }
+  });
+  failedQueue = [];
+};
+
+// ---- Request Interceptor ----
 axiosInstance.interceptors.request.use(
-  (config) => {
+  (config: InternalAxiosRequestConfig) => {
     const token = getToken();
-    if (token) {
+    if (token && config.headers) {
+      config.headers["Authorization"] = `Bearer ${token}`;
       config.headers["x-access-token"] = token;
     }
     return config;
@@ -24,48 +68,74 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-// 2. Response Interceptor: Handle 401 & Auto-Refresh Token
+// ---- Response Interceptor ----
 axiosInstance.interceptors.response.use(
-  (response) => response,
-  async (error) => {
+  (response) => {
+    const { config, status, data } = response;
+    const showToast = config?.showSuccessToast ?? false;
+
+    if (config?.method !== "get" && successStatusCodes.includes(status) && showToast) {
+      sToast.success(data?.message || defaultMessage);
+    }
+    return response;
+  },
+  async (error: AxiosError<IApiResponse>) => {
     const originalRequest = error.config;
 
-    // Check if error is 401 and request hasn't been retried yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (!originalRequest) {
+      return Promise.reject(error);
+    }
+
+    const isRefreshTokenRequest = originalRequest.url?.includes(refreshTokenEndpoint);
+
+    // Handle 401 & Auto-Refresh Token
+    if (error.response?.status === 401 && !originalRequest._retry && !isRefreshTokenRequest) {
+      if (isRefreshing) {
+        return new Promise<AxiosResponse>((resolve, reject) => {
+          failedQueue.push({ resolve, reject, config: originalRequest });
+        });
+      }
+
+      isRefreshing = true;
       originalRequest._retry = true;
 
       try {
-        const refreshToken =
-          getCookie(refreshTokenName) ||
-          window.localStorage.getItem(refreshTokenName) ||
-          window.sessionStorage.getItem(refreshTokenName);
+        const token = getToken();
+        const rToken = getRefreshToken();
 
-        // Request a new access token from your backend
-        const res = await axios.post(`${baseURL}/auth/refresh-token`, {
-          refreshToken,
-        });
+        if (!token || !rToken) {
+          triggerLogout();
+          return Promise.reject(error);
+        }
 
-        const newAccessToken = res.data.accessToken;
+        const res = await axios.post<IApiResponse<IAuthResponseData>>(
+          `${baseUrlApi}${refreshTokenEndpoint}`,
+          {
+            refreshToken: rToken,
+          }
+        );
 
-        // Save new token and update header for the retried request
-        setToken(newAccessToken);
-        originalRequest.headers["x-access-token"] = newAccessToken;
+        const newAccessToken = res.data.data?.accessToken;
+        const newRefreshToken = res.data.data?.refreshToken;
 
-        // Re-run the failed original request with the new token
-        return axiosInstance(originalRequest);
-      } catch (refreshError) {
-        // Refresh failed (token expired or invalid) -> clear storage and redirect to login
-        window.localStorage.clear();
-        window.sessionStorage.clear();
-        deleteCookie(refreshTokenName);
-        deleteCookie(accessTokenName);
-        // redirect("/auth/login");
-        return Promise.reject(refreshError);
+        if (newAccessToken) {
+          updateTokens(newAccessToken, newRefreshToken);
+          processQueue(null, newAccessToken);
+          originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
+          originalRequest.headers["x-access-token"] = newAccessToken;
+          return axiosInstance(originalRequest);
+        }
+      } catch (refreshErr) {
+        processQueue(refreshErr as AxiosError);
+        triggerLogout();
+        return Promise.reject(refreshErr);
+      } finally {
+        isRefreshing = false;
       }
     }
 
     return Promise.reject(error);
-  },
+  }
 );
 
 export default axiosInstance;

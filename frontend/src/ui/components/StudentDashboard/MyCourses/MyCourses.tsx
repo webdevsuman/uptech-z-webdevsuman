@@ -17,13 +17,12 @@ import {
 } from "@mui/material";
 import CoursePlayer from "./Player/CoursePlayer";
 import { getImageUrl } from "@/utils/getImageUrl";
-import { useSelector } from "react-redux";
-import { RootState } from "@/redux-toolkit/store/store";
+import { useAuth } from "@/context/AuthContext";
 
 export default function MyCourses() {
   const [courses, setCourses] = useState<CourseSummary[]>([]);
   const [activeCourse, setActiveCourse] = useState<CourseSummary | null>(null);
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { user } = useAuth();
   const userId = user?.id;
 
   const fetchCourses = async () => {
