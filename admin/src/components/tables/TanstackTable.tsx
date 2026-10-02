@@ -24,6 +24,22 @@ import {
 } from "@/components/ui/table";
 import Pagination from "@/components/tables/Pagination";
 import { AppIcon } from "@/components/ui/app-icon";
+import ConfirmationModal, {
+  TConfirmModalVariant,
+} from "@/components/common/ConfirmationModal";
+
+export interface TableConfirmConfig {
+  title: string;
+  description?: string;
+  confirmText?: string;
+  cancelText?: string;
+  variant?: TConfirmModalVariant;
+  onConfirm: () => void | Promise<void>;
+}
+
+export interface AppTableMeta {
+  confirm: (config: TableConfirmConfig) => void;
+}
 
 export const tableAppFeatures = tableFeatures({
   columnFilteringFeature,
@@ -34,6 +50,7 @@ export const tableAppFeatures = tableFeatures({
   rowPaginationFeature,
   paginatedRowModel: createPaginatedRowModel(),
   columnVisibilityFeature,
+  tableMeta: {} as AppTableMeta,
 });
 
 export type TAppTableFeatures = typeof tableAppFeatures;
@@ -56,10 +73,45 @@ export function TanstackTable<TData extends Record<string, unknown>>({
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState<string>("");
 
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    config: TableConfirmConfig | null;
+    isLoading: boolean;
+  }>({
+    isOpen: false,
+    config: null,
+    isLoading: false,
+  });
+
+  const handleOpenConfirm = (config: TableConfirmConfig) => {
+    setConfirmModal({
+      isOpen: true,
+      config,
+      isLoading: false,
+    });
+  };
+
+  const handleExecuteConfirm = async () => {
+    if (!confirmModal.config) return;
+    try {
+      setConfirmModal((prev) => ({ ...prev, isLoading: true }));
+      await confirmModal.config.onConfirm();
+    } finally {
+      setConfirmModal({
+        isOpen: false,
+        config: null,
+        isLoading: false,
+      });
+    }
+  };
+
   const table = useTable({
     features: tableAppFeatures,
     columns,
     data,
+    meta: {
+      confirm: handleOpenConfirm,
+    },
     state: {
       sorting,
       globalFilter,
@@ -181,6 +233,23 @@ export function TanstackTable<TData extends Record<string, unknown>>({
             onPageChange={(page) => table.setPageIndex(page - 1)}
           />
         </div>
+      )}
+
+      {/* Internal Reusable Confirmation Modal */}
+      {confirmModal.config && (
+        <ConfirmationModal
+          isOpen={confirmModal.isOpen}
+          title={confirmModal.config.title}
+          description={confirmModal.config.description}
+          confirmText={confirmModal.config.confirmText}
+          cancelText={confirmModal.config.cancelText}
+          variant={confirmModal.config.variant}
+          isLoading={confirmModal.isLoading}
+          onClose={() =>
+            setConfirmModal({ isOpen: false, config: null, isLoading: false })
+          }
+          onConfirm={handleExecuteConfirm}
+        />
       )}
     </div>
   );

@@ -27,5 +27,5 @@
 - **Users module** - View, Edit, Verify, Deactivate
 - **Courses module** - Approve, Reject, Edit content
 - **Category module** -
-- **Tags module** -
+- **Tags module** - List, Create, Edit, Delete with Live Badge preview & Deletion Modal
 - **Reviews module** -

@@ -34,24 +34,24 @@ export const endpoints = {
     logout: 'auth/logout',
   },
   users: {
-    list: 'admin/users',
-    details: (id: string) => `admin/users/${id}`,
+    list: 'users',
+    details: (id: string) => `users/${id}`,
   },
   courses: {
-    list: 'admin/courses',
-    details: (id: string) => `admin/courses/${id}`,
+    list: 'courses',
+    details: (id: string) => `courses/${id}`,
   },
   categories: {
-    list: 'admin/categories',
-    details: (id: string) => `admin/categories/${id}`,
+    list: 'categories',
+    details: (id: string) => `categories/${id}`,
   },
   tags: {
-    list: 'admin/tags',
-    details: (id: string) => `admin/tags/${id}`,
+    list: 'tags',
+    details: (id: string) => `tags/${id}`,
   },
   reviews: {
-    list: 'admin/reviews',
-    details: (id: string) => `admin/reviews/${id}`,
+    list: 'reviews',
+    details: (id: string) => `reviews/${id}`,
   },
   cms: {
     homepage: 'v2/homepage',

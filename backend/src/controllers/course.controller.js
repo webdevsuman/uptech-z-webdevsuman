@@ -39,7 +39,7 @@ class CourseController {
     }
   }
 
-  // 3. Get single course by ID for edit/manage
+  // 2. Get single course by ID for edit/manage
   async getCourseById(req, res) {
     try {
       const { id } = req.params;
@@ -75,7 +75,7 @@ class CourseController {
     }
   }
 
-  // 4. Step 2: Incrementally update course details
+  // 3. Step 2: Incrementally update course details
   async updateCourse(req, res) {
     try {
       const { id } = req.params;
@@ -126,7 +126,7 @@ class CourseController {
     }
   }
 
-  // 5. Get list of courses created by the logged-in instructor
+  // 4. Get list of courses created by the logged-in instructor
   async getInstructorCourses(req, res) {
     try {
       const courses = await Course.find({ instructor: req.user._id })

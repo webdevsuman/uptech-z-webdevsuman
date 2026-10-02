@@ -20,23 +20,27 @@ export const ROUTES = {
 
   // UpTech-Z LMS Modules
   users: {
-    list: '/users',
+    list: '/users/list',
   },
 
   courses: {
-    list: '/courses',
+    list: '/courses/list',
   },
 
   categories: {
-    list: '/categories',
+    list: '/category/list',
+    add: '/category/add',
+    edit: (id: string) => `/category/edit/${id}`,
   },
 
   tags: {
-    list: '/tags',
+    list: '/tags/list',
+    add: '/tags/add',
+    edit: (id: string) => `/tags/edit/${id}`,
   },
 
   reviews: {
-    list: '/reviews',
+    list: '/reviews/list',
   },
 
   cms: {
