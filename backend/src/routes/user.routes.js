@@ -1,13 +1,13 @@
 import { Router } from "express";
-import userController from "../../controllers/admin/user.controller.js";
-import authMiddleware from "../../middlewares/auth.middleware.js";
-import checkPermission from "../../middlewares/permission.middleware.js";
-import PERMISSIONS from "../../constants/permissions.constant.js";
-import Validation from "../../validators/index.js";
+import userController from "../controllers/user.controller.js";
+import authMiddleware from "../middlewares/auth.middleware.js";
+import checkPermission from "../middlewares/permission.middleware.js";
+import PERMISSIONS from "../constants/permissions.constant.js";
+import Validation from "../validators/index.js";
 import {
   updateUserSchema,
   updateUserStatusSchema,
-} from "../../validators/user.validator.js";
+} from "../validators/user.validator.js";
 
 const adminUserRouter = Router();
 

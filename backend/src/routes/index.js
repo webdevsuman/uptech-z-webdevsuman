@@ -4,6 +4,7 @@ import authRouter from "./auth.routes.js";
 import categoryRouter from "./category.routes.js";
 import courseRouter from "./course.routes.js";
 import tagRouter from "./tag.routes.js";
+import adminUserRouter from "./user.routes.js";
 
 const apiRouter = Router();
 

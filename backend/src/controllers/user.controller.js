@@ -1,7 +1,7 @@
-import User from "../../models/user.model.js";
-import Role from "../../models/role.model.js";
-import httpStatusCodes from "../../utils/httpStatusCodes.js";
-import logger from "../../utils/logger.js";
+import User from "../models/user.model.js";
+import Role from "../models/role.model.js";
+import httpStatusCodes from "../utils/httpStatusCodes.js";
+import logger from "../utils/logger.js";
 import ROLES from "../constants/roles.constant.js";
 
 class UserController {
