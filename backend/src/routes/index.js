@@ -15,6 +15,7 @@ apiRouter.use("/v2", frontendRouter);
 apiRouter.use("/courses", courseRouter);
 
 //Admin
+apiRouter.use("/users", adminUserRouter);
 apiRouter.use("/categories", categoryRouter);
 apiRouter.use("/tags", tagRouter);
 
