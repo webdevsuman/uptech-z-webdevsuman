@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import React from "react";
 import { DashboardHeader } from "@/module/dashboard/DashboardHeader";
 import { LmsMetrics } from "@/module/dashboard/LmsMetrics";
+import { DashboardAnalyticsGrid } from "@/module/dashboard/DashboardAnalyticsGrid";
 
 export const metadata: Metadata = {
   title: "Admin Dashboard | UpTech-Z LMS",
@@ -13,6 +14,7 @@ export default function AdminDashboardPage() {
     <div className="space-y-6">
       <DashboardHeader />
       <LmsMetrics />
+      <DashboardAnalyticsGrid />
     </div>
   );
 }

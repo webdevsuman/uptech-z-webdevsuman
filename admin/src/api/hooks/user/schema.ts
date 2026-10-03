@@ -12,6 +12,7 @@ export interface IUserItem {
   isVerified: boolean;
   bio?: string;
   qualification?: string;
+  profilePicture?: string;
   createdAt: string;
 }
 

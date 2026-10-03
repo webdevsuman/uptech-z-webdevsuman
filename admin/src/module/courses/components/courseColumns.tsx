@@ -88,7 +88,7 @@ export const getCourseColumns = ({
       const p = row.original.price;
       return (
         <span className="font-semibold text-sm text-gray-800 dark:text-white">
-          {p && p > 0 ? `$${p.toFixed(2)}` : "Free"}
+          {p && p > 0 ? `₹${p.toFixed(2)}` : "Free"}
         </span>
       );
     },

@@ -1,27 +1,27 @@
 "use client";
 
-import React, { useMemo } from "react";
-import Link from "next/link";
-import { TableOptions } from "@tanstack/react-table";
+import React, { useMemo, useState } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import {
-  TanstackTable,
-  TAppTableFeatures,
-} from "@/components/tables/TanstackTable";
+import { TanstackTable } from "@/components/tables/TanstackTable";
 import {
   useUsersList,
   useToggleUserStatus,
   useVerifyUser,
 } from "@/api/hooks/user/hook";
-import { IUserItem } from "@/api/hooks/user/schema";
-import AvatarText from "@/components/ui/avatar/AvatarText";
-import Badge from "@/components/ui/badge/Badge";
 import { AppIcon } from "@/components/ui/app-icon";
-
-export type TUserTableItem = IUserItem & Record<string, unknown>;
+import {
+  getUserColumns,
+  TUserTableItem,
+} from "../components/userColumns";
 
 export const UsersListPage: React.FC = () => {
-  const { data, isLoading, error } = useUsersList();
+  const [selectedRole, setSelectedRole] = useState<string>("all");
+
+  const { data, isLoading, error } = useUsersList({
+    role: selectedRole !== "all" ? selectedRole : undefined,
+    limit: 100,
+  });
+
   const { mutate: toggleStatus, isPending: isTogglingStatus } =
     useToggleUserStatus();
   const { mutate: verifyUser, isPending: isVerifying } = useVerifyUser();
@@ -29,156 +29,17 @@ export const UsersListPage: React.FC = () => {
   const users = useMemo<TUserTableItem[]>(() => {
     const list = data?.data;
     if (!Array.isArray(list)) return [];
-    return list.map((item) => ({
-      ...item,
-    }));
+    return list.map((item) => ({ ...item }));
   }, [data]);
 
-  const getRoleBadgeColor = (roleName?: string) => {
-    switch (roleName?.toLowerCase()) {
-      case "admin":
-        return "error";
-      case "instructor":
-        return "primary";
-      case "student":
-        return "info";
-      default:
-        return "light";
-    }
-  };
-
-  const columns = useMemo<
-    TableOptions<TAppTableFeatures, TUserTableItem>["columns"]
-  >(
-    () => [
-      {
-        accessorKey: "name",
-        header: () => "User",
-        cell: ({ row }) => (
-          <div className="flex items-center gap-3">
-            <AvatarText name={row.original.name || "User"} />
-            <div>
-              <p className="font-medium text-gray-800 dark:text-white/90">
-                {row.original.name}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {row.original.email}
-              </p>
-            </div>
-          </div>
-        ),
-      },
-      {
-        accessorKey: "role",
-        header: () => "Role",
-        cell: ({ row }) => {
-          const roleName = row.original.role?.name || "N/A";
-          return (
-            <Badge
-              variant="light"
-              color={getRoleBadgeColor(roleName)}
-              size="sm"
-            >
-              {roleName.toUpperCase()}
-            </Badge>
-          );
-        },
-      },
-      {
-        accessorKey: "isActive",
-        header: () => "Status",
-        cell: ({ row, table }) => {
-          const isActive = row.original.isActive;
-          return (
-            <button
-              type="button"
-              disabled={isTogglingStatus}
-              onClick={() =>
-                table.options.meta?.confirm({
-                  title: isActive ? "deactivate this user?" : "activate this user?",
-                  confirmText: isActive ? "Deactivate" : "Activate",
-                  variant: isActive ? "danger" : "success",
-                  onConfirm: () =>
-                    toggleStatus({ id: row.original._id, isActive: !isActive }),
-                })
-              }
-              title={`Click to ${isActive ? "deactivate" : "activate"}`}
-              className="inline-flex cursor-pointer transition hover:opacity-80 disabled:opacity-50"
-            >
-              <Badge
-                variant="light"
-                color={isActive ? "success" : "error"}
-                size="sm"
-              >
-                {isActive ? "Active" : "Inactive"}
-              </Badge>
-            </button>
-          );
-        },
-      },
-      {
-        accessorKey: "isVerified",
-        header: () => "Verification",
-        cell: ({ row, table }) => {
-          const isVerified = row.original.isVerified;
-          return (
-            <button
-              type="button"
-              disabled={isVerifying}
-              onClick={() =>
-                table.options.meta?.confirm({
-                  title: isVerified ? "unverify this email?" : "verify this email?",
-                  confirmText: isVerified ? "Unverify" : "Verify",
-                  variant: isVerified ? "warning" : "primary",
-                  onConfirm: () =>
-                    verifyUser({ id: row.original._id, isVerified: !isVerified }),
-                })
-              }
-              title={`Click to ${isVerified ? "unverify" : "verify"}`}
-              className="inline-flex cursor-pointer transition hover:opacity-80 disabled:opacity-50"
-            >
-              <Badge
-                variant="light"
-                color={isVerified ? "success" : "warning"}
-                size="sm"
-              >
-                {isVerified ? "Verified" : "Pending"}
-              </Badge>
-            </button>
-          );
-        },
-      },
-      {
-        accessorKey: "createdAt",
-        header: () => "Joined Date",
-        cell: ({ row }) => (
-          <span className="text-sm text-gray-500 dark:text-gray-400">
-            {row.original.createdAt
-              ? new Date(row.original.createdAt).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                })
-              : "N/A"}
-          </span>
-        ),
-      },
-      {
-        id: "actions",
-        header: () => "Actions",
-        cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <Link
-              href={`/users/edit/${row.original._id}`}
-              className="p-1.5 text-gray-500 hover:text-brand-500 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-              title="View & Edit Details"
-            >
-              <AppIcon icon="lucide:pencil" className="w-4 h-4" />
-            </Link>
-          </div>
-        ),
-      },
-    ],
+  const columns = useMemo(
+    () =>
+      getUserColumns({
+        toggleStatus,
+        verifyUser,
+        isTogglingStatus,
+        isVerifying,
+      }),
     [toggleStatus, verifyUser, isTogglingStatus, isVerifying]
   );
 
@@ -211,13 +72,29 @@ export const UsersListPage: React.FC = () => {
         </div>
       )}
 
-      {/* TanStack Table with Internal Confirmation Modal */}
+      {/* TanStack Table with Role Filter and Internal Confirmation Modal */}
       <TanstackTable
         columns={columns}
         data={users}
         isLoading={isLoading}
         searchPlaceholder="Search users by name, email, or role..."
         emptyMessage="No users found."
+        extraHeader={
+          <div className="relative min-w-[170px] sm:min-w-[200px]">
+            <select
+              value={selectedRole}
+              onChange={(e) => setSelectedRole(e.target.value)}
+              className="h-10 w-full appearance-none rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 pl-3.5 pr-9 text-sm focus:border-brand-500 focus:outline-none transition cursor-pointer shadow-sm"
+            >
+              <option value="all">All Roles</option>
+              <option value="student">Student</option>
+              <option value="instructor">Instructor</option>
+            </select>
+            <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400">
+              <AppIcon icon="lucide:chevron-down" className="w-4 h-4" />
+            </div>
+          </div>
+        }
       />
     </div>
   );

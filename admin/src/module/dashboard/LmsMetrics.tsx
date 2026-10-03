@@ -3,91 +3,123 @@
 import React from "react";
 import Badge from "@/components/ui/badge/Badge";
 import {
-  ArrowDownIcon,
   ArrowUpIcon,
   DocsIcon,
   DollarLineIcon,
   GroupIcon,
   UserCircleIcon,
 } from "@/icons";
+import { useAdminDashboardAnalytics } from "@/api/hooks/dashboard/hook";
 
-interface MetricItem {
+interface MetricCardProps {
   title: string;
   value: string;
-  change: string;
-  isPositive: boolean;
+  badgeText: string;
+  subtitle?: string;
   icon: React.ReactNode;
 }
 
-const metricsData: MetricItem[] = [
-  {
-    title: "Total Students",
-    value: "12,450",
-    change: "+14.5%",
-    isPositive: true,
-    icon: <GroupIcon className="text-brand-500 size-6 dark:text-brand-400" />,
-  },
-  {
-    title: "Instructors",
-    value: "185",
-    change: "+4.2%",
-    isPositive: true,
-    icon: <UserCircleIcon className="text-brand-500 size-6 dark:text-brand-400" />,
-  },
-  {
-    title: "Active Courses",
-    value: "340",
-    change: "+8.1%",
-    isPositive: true,
-    icon: <DocsIcon className="text-brand-500 size-6 dark:text-brand-400" />,
-  },
-  {
-    title: "Platform Revenue",
-    value: "$48,920",
-    change: "+18.3%",
-    isPositive: true,
-    icon: <DollarLineIcon className="text-brand-500 size-6 dark:text-brand-400" />,
-  },
-];
+const MetricCard: React.FC<MetricCardProps> = ({
+  title,
+  value,
+  badgeText,
+  subtitle,
+  icon,
+}) => (
+  <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6 shadow-sm hover:shadow-md transition-shadow">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center justify-center w-12 h-12 bg-brand-50 rounded-xl dark:bg-brand-500/10">
+        {icon}
+      </div>
+      <Badge color="success" size="sm" startIcon={<ArrowUpIcon className="size-3" />}>
+        {badgeText}
+      </Badge>
+    </div>
+
+    <div className="mt-4">
+      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+        {title}
+      </span>
+      <h4 className="mt-1 font-bold text-gray-800 text-title-sm dark:text-white/90">
+        {value}
+      </h4>
+      {subtitle && (
+        <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+          {subtitle}
+        </p>
+      )}
+    </div>
+  </div>
+);
+
+const SkeletonCard: React.FC = () => (
+  <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6 animate-pulse">
+    <div className="flex items-center justify-between">
+      <div className="w-12 h-12 rounded-xl bg-gray-200 dark:bg-gray-700" />
+      <div className="w-14 h-5 rounded-full bg-gray-200 dark:bg-gray-700" />
+    </div>
+    <div className="mt-4 space-y-2">
+      <div className="w-24 h-4 rounded bg-gray-200 dark:bg-gray-700" />
+      <div className="w-32 h-7 rounded bg-gray-200 dark:bg-gray-700" />
+      <div className="w-20 h-3 rounded bg-gray-200 dark:bg-gray-700" />
+    </div>
+  </div>
+);
 
 export const LmsMetrics: React.FC = () => {
+  const { data, isLoading } = useAdminDashboardAnalytics();
+  const overview = data?.data?.overview;
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 xl:grid-cols-4">
+        {[...Array(4)].map((_, i) => (
+          <SkeletonCard key={i} />
+        ))}
+      </div>
+    );
+  }
+
+  const revenue = overview?.totalRevenue ?? 0;
+  const enrollments = overview?.totalEnrollments ?? 0;
+  const students = overview?.totalStudents ?? 0;
+  const instructors = overview?.totalInstructors ?? 0;
+  const courses = overview?.totalCourses ?? 0;
+  const activeCourses = overview?.activeCourses ?? 0;
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 xl:grid-cols-4">
-      {metricsData.map((metric) => (
-        <div
-          key={metric.title}
-          className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6"
-        >
-          <div className="flex items-center justify-center w-12 h-12 bg-brand-50 rounded-xl dark:bg-brand-500/10">
-            {metric.icon}
-          </div>
+      <MetricCard
+        title="Platform Revenue"
+        value={`₹${revenue.toLocaleString("en-IN")}`}
+        badgeText="Live"
+        subtitle={`${enrollments} total enrollment${enrollments === 1 ? "" : "s"}`}
+        icon={<DollarLineIcon className="text-brand-500 size-6 dark:text-brand-400" />}
+      />
 
-          <div className="flex items-end justify-between mt-5">
-            <div>
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                {metric.title}
-              </span>
-              <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
-                {metric.value}
-              </h4>
-            </div>
+      <MetricCard
+        title="Total Enrollments"
+        value={enrollments.toLocaleString("en-IN")}
+        badgeText="Active"
+        subtitle={`Across all paid & free courses`}
+        icon={<GroupIcon className="text-brand-500 size-6 dark:text-brand-400" />}
+      />
 
-            <Badge
-              color={metric.isPositive ? "success" : "error"}
-              size="sm"
-              startIcon={
-                metric.isPositive ? (
-                  <ArrowUpIcon className="size-3" />
-                ) : (
-                  <ArrowDownIcon className="size-3" />
-                )
-              }
-            >
-              {metric.change}
-            </Badge>
-          </div>
-        </div>
-      ))}
+      <MetricCard
+        title="Total Courses"
+        value={courses.toLocaleString("en-IN")}
+        badgeText="Catalog"
+        subtitle={`${activeCourses} published · ${courses - activeCourses} draft/review`}
+        icon={<DocsIcon className="text-brand-500 size-6 dark:text-brand-400" />}
+      />
+
+      <MetricCard
+        title="Instructors & Learners"
+        value={`${instructors} / ${students}`}
+        badgeText="Community"
+        subtitle={`${instructors} mentors · ${students} students`}
+        icon={<UserCircleIcon className="text-brand-500 size-6 dark:text-brand-400" />}
+      />
     </div>
   );
 };

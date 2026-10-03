@@ -61,6 +61,7 @@ export interface TanstackTableProps<TData extends Record<string, unknown>> {
   isLoading?: boolean;
   searchPlaceholder?: string;
   emptyMessage?: string;
+  extraHeader?: React.ReactNode;
 }
 
 export function TanstackTable<TData extends Record<string, unknown>>({
@@ -69,6 +70,7 @@ export function TanstackTable<TData extends Record<string, unknown>>({
   isLoading = false,
   searchPlaceholder = "Search...",
   emptyMessage = "No items found.",
+  extraHeader,
 }: TanstackTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState<string>("");
@@ -128,19 +130,22 @@ export function TanstackTable<TData extends Record<string, unknown>>({
 
   return (
     <div className="space-y-4">
-      {/* Search Input */}
-      <div className="flex items-center justify-between">
-        <div className="relative w-full max-w-xs">
-          <input
-            type="text"
-            placeholder={searchPlaceholder}
-            value={globalFilter ?? ""}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            className="h-10 pl-9 pr-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:border-brand-500 focus:outline-none w-full transition-all"
-          />
-          <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
-            <AppIcon icon="lucide:search" className="w-4 h-4" />
+      {/* Search Input & Extra Header Toolbar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3 w-full">
+          <div className="relative w-full max-w-xs">
+            <input
+              type="text"
+              placeholder={searchPlaceholder}
+              value={globalFilter ?? ""}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              className="h-10 pl-9 pr-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 dark:text-gray-300 text-sm focus:border-brand-500 focus:outline-none w-full transition-all"
+            />
+            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
+              <AppIcon icon="lucide:search" className="w-4 h-4" />
+            </div>
           </div>
+          {extraHeader}
         </div>
       </div>
 

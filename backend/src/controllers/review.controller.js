@@ -216,6 +216,121 @@ class ReviewController {
       });
     }
   }
+
+  // Admin: Get all reviews with filters, search, and platform review statistics
+  async getAllReviewsAdmin(req, res) {
+    try {
+      const { search, rating, courseId } = req.query;
+
+      const query = {};
+
+      if (courseId && mongoose.Types.ObjectId.isValid(courseId)) {
+        query.course = courseId;
+      }
+
+      if (rating && !isNaN(Number(rating))) {
+        query.rating = Number(rating);
+      }
+
+      if (search && typeof search === "string" && search.trim()) {
+        const regex = new RegExp(search.trim(), "i");
+        query.comment = regex;
+      }
+
+      const reviews = await Review.find(query)
+        .populate("student", "name email profilePicture")
+        .populate("course", "title thumbnail price rating")
+        .sort({ createdAt: -1 });
+
+      // Compute global review stats for admin summary
+      const allReviews = await Review.find().select("rating");
+      const total = allReviews.length;
+      let sumRating = 0;
+      const breakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+
+      allReviews.forEach((r) => {
+        sumRating += r.rating;
+        const rounded = Math.round(r.rating);
+        if (breakdown[rounded] !== undefined) {
+          breakdown[rounded] += 1;
+        }
+      });
+
+      const averageRating = total > 0 ? Number((sumRating / total).toFixed(1)) : 0;
+
+      return res.status(httpStatusCodes.OK).json({
+        success: true,
+        data: reviews,
+        meta: {
+          total,
+          averageRating,
+          breakdown,
+        },
+      });
+    } catch (error) {
+      logger.error(`getAllReviewsAdmin error: ${error.message}`);
+      return res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: error.message || "Failed to fetch reviews",
+      });
+    }
+  }
+
+  // Admin: Delete a review and recalculate course rating
+  async deleteReviewAdmin(req, res) {
+    try {
+      const { id } = req.params;
+
+      if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(httpStatusCodes.BAD_REQUEST).json({
+          success: false,
+          message: "Valid review ID is required",
+        });
+      }
+
+      const review = await Review.findById(id);
+      if (!review) {
+        return res.status(httpStatusCodes.NOT_FOUND).json({
+          success: false,
+          message: "Review not found",
+        });
+      }
+
+      const courseId = review.course;
+      await Review.findByIdAndDelete(id);
+
+      // Recalculate Course aggregate rating and count
+      const stats = await Review.aggregate([
+        { $match: { course: new mongoose.Types.ObjectId(courseId) } },
+        {
+          $group: {
+            _id: "$course",
+            avgRating: { $avg: "$rating" },
+            total: { $sum: 1 },
+          },
+        },
+      ]);
+
+      const updatedRating = stats[0] ? Number(stats[0].avgRating.toFixed(1)) : 0;
+      const updatedReviewsCount = stats[0] ? stats[0].total : 0;
+
+      await Course.findByIdAndUpdate(courseId, {
+        rating: updatedRating,
+        reviewsCount: updatedReviewsCount,
+      });
+
+      return res.status(httpStatusCodes.OK).json({
+        success: true,
+        message: "Review deleted successfully",
+      });
+    } catch (error) {
+      logger.error(`deleteReviewAdmin error: ${error.message}`);
+      return res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: error.message || "Failed to delete review",
+      });
+    }
+  }
 }
 
 export default new ReviewController();

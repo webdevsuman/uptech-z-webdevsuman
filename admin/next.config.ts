@@ -8,6 +8,21 @@ const nextConfig: NextConfig = {
     NEXT_APP_ENCRYPTION_KEY_NAME: process.env.NEXT_APP_ENCRYPTION_KEY_NAME,
     NEXT_APP_REMEMBER_ME_KEY_NAME: process.env.NEXT_APP_REMEMBER_ME_KEY_NAME,
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "5000",
+        pathname: "/**",
+      },
+    ],
+  },
   /* config options here */
   webpack(config) {
     config.module.rules.push({

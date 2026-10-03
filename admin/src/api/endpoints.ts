@@ -58,6 +58,9 @@ export const endpoints = {
     list: 'reviews',
     details: (id: string) => `reviews/${id}`,
   },
+  analytics: {
+    dashboard: 'analytics/dashboard',
+  },
   cms: {
     homepage: 'v2/homepage',
   },

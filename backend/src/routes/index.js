@@ -11,6 +11,7 @@ import enrollmentRouter from "./enrollment.routes.js";
 import wishlistRouter from "./wishlist.routes.js";
 import reviewRouter from "./review.routes.js";
 import qnaRouter from "./qna.routes.js";
+import analyticsRouter from "./analytics.routes.js";
 
 const apiRouter = Router();
 
@@ -30,5 +31,6 @@ apiRouter.use("/qna", qnaRouter);
 apiRouter.use("/users", adminUserRouter);
 apiRouter.use("/categories", categoryRouter);
 apiRouter.use("/tags", tagRouter);
+apiRouter.use("/analytics", analyticsRouter);
 
 export default apiRouter;
