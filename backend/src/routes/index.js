@@ -5,6 +5,7 @@ import categoryRouter from "./category.routes.js";
 import courseRouter from "./course.routes.js";
 import tagRouter from "./tag.routes.js";
 import adminUserRouter from "./user.routes.js";
+import announcementRouter from "./announcement.routes.js";
 
 const apiRouter = Router();
 
@@ -14,6 +15,7 @@ apiRouter.use("/auth", authRouter);
 // Frontend
 apiRouter.use("/v2", frontendRouter);
 apiRouter.use("/courses", courseRouter);
+apiRouter.use("/announcements", announcementRouter);
 
 //Admin
 apiRouter.use("/users", adminUserRouter);

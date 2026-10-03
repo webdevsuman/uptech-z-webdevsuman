@@ -12,3 +12,7 @@ export enum CourseQueryEnum {
   TrendingCourses = "trending-courses",
   CourseDetails = "course-details",
 }
+
+export enum AnnouncementQueryEnum {
+  Announcements = "announcements",
+}

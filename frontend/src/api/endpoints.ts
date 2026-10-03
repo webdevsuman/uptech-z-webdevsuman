@@ -54,4 +54,10 @@ export const endpoints = {
   users: {
     profile: "users/profile",
   },
+  announcements: {
+    list: "announcements",
+    create: "announcements",
+    update: (id: string) => `announcements/${id}`,
+    delete: (id: string) => `announcements/${id}`,
+  },
 };
