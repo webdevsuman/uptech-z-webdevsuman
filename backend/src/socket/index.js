@@ -12,6 +12,8 @@ export const initSocket = (httpServer) => {
       origin: [
         "http://localhost:3000",
         "http://localhost:3001",
+        "https://uptech-z-webdevsuman.vercel.app",
+        "https://uptech-z-webdevsuman-admin.vercel.app",
         process.env.CLIENT_URL,
         process.env.ADMIN_URL,
       ].filter(Boolean),
