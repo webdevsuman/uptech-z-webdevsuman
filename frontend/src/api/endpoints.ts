@@ -85,4 +85,8 @@ export const endpoints = {
     reply: (questionId: string) => `qna/${questionId}/reply`,
     delete: (questionId: string) => `qna/${questionId}`,
   },
+  payments: {
+    createCheckoutSession: "payments/create-checkout-session",
+    verifySession: "payments/verify-session",
+  },
 };
