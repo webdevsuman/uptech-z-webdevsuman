@@ -3,6 +3,7 @@
 import { ReactNode, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { getRoleName } from "@/utils/functions/auth.lib";
 
 type ProtectedRouteProps = {
   allowedRoles: string[];
@@ -37,7 +38,9 @@ export default function ProtectedRoute({
   }
 
   // Role check
-  if (role && !allowedRoles.includes(role)) {
+  const roleName = getRoleName(role) || getRoleName(user?.role);
+
+  if (roleName && !allowedRoles.includes(roleName)) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <p className="text-error-500 font-medium">Access denied 🚫</p>

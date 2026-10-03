@@ -21,3 +21,25 @@ export const updateUserStatusSchema = z.object({
   isActive: z.boolean().optional(),
   isVerified: z.boolean().optional(),
 });
+
+// 3. Self-service profile update
+export const updateProfileSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Name must be at least 2 characters")
+    .max(60, "Name must not exceed 60 characters")
+    .optional(),
+  qualification: z
+    .string()
+    .trim()
+    .max(120, "Qualification / headline cannot exceed 120 characters")
+    .optional()
+    .or(z.literal("")),
+  bio: z
+    .string()
+    .trim()
+    .max(1500, "Bio cannot exceed 1500 characters")
+    .optional()
+    .or(z.literal("")),
+});

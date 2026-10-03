@@ -7,13 +7,29 @@ import Validation from "../validators/index.js";
 import {
   updateUserSchema,
   updateUserStatusSchema,
+  updateProfileSchema,
 } from "../validators/user.validator.js";
+import {
+  uploadImage,
+  uploadToCloudinaryMiddleware,
+} from "../middlewares/upload.middleware.js";
 
 const adminUserRouter = Router();
 
 // All routes require auth
 adminUserRouter.use(authMiddleware);
 
+// Self-Service Profile(Any authenticated user)
+adminUserRouter.get("/profile", userController.getProfile);
+adminUserRouter.patch(
+  "/profile",
+  uploadImage.single("avatar"),
+  uploadToCloudinaryMiddleware("users"),
+  Validation.validate(updateProfileSchema),
+  userController.updateProfile,
+);
+
+//Admin
 adminUserRouter.get(
   "/",
   checkPermission(PERMISSIONS.USER_READ),

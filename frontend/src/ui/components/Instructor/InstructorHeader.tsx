@@ -17,6 +17,7 @@ import { Menu as MenuIcon, Add as AddIcon } from "@mui/icons-material";
 import { useAuth } from "@/context/AuthContext";
 import DarkModeToggle from "@/ui/DarkModeToggle";
 import { getInitials } from "@/utils/functions/label.lib";
+import { getRoleName } from "@/utils/functions/auth.lib";
 
 interface InstructorHeaderProps {
   onToggleMobileMenu: () => void;
@@ -95,6 +96,7 @@ export default function InstructorHeader({
           {/* User Profile Info */}
           <Stack direction="row" sx={{alignItems:"center"}} spacing={1}>
             <Avatar
+              src={user?.profilePicture || user?.avatar || undefined}
               sx={{
                 width: 34,
                 height: 34,
@@ -111,7 +113,7 @@ export default function InstructorHeader({
                 {user?.name || "Instructor"}
               </Typography>
               <Typography sx={{ variant: "caption", color: "text.secondary", textTransform: "capitalize", fontSize: "0.75rem" }}>
-                {user?.role || "Instructor"}
+                {getRoleName(user?.role) || "Instructor"}
               </Typography>
             </Box>
 

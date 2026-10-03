@@ -5,6 +5,7 @@ import { IUser, UserRole } from "@/typescript/interface/auth.interface";
 import { getToken } from "@/lib/token.lib";
 import { useLogout } from "@/api/hooks/auth/hooks";
 import { USER_STORAGE_KEY } from "@/config/constants";
+import { getRoleName } from "@/utils/functions/auth.lib";
 
 interface AuthContextType {
   user: IUser | null;
@@ -18,6 +19,15 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const normalizeUserRole = (rawUser: IUser | null): IUser | null => {
+  if (!rawUser) return null;
+  const roleName = (getRoleName(rawUser.role) as UserRole) || "student";
+  return {
+    ...rawUser,
+    role: roleName,
+  };
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUserState] = useState<IUser | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -30,7 +40,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const stored = localStorage.getItem(USER_STORAGE_KEY);
       if (stored) {
         try {
-          setUserState(JSON.parse(stored));
+          const parsed = JSON.parse(stored);
+          const normalized = normalizeUserRole(parsed);
+          setUserState(normalized);
+          // Automatically sanitize stored user if role was serialized as an object
+          if (normalized && typeof parsed?.role === "object") {
+            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalized));
+          }
         } catch {
           localStorage.removeItem(USER_STORAGE_KEY);
         }
@@ -43,9 +59,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const setUser = (newUser: IUser | null) => {
-    setUserState(newUser);
-    if (newUser) {
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(newUser));
+    const normalized = normalizeUserRole(newUser);
+    setUserState(normalized);
+    if (normalized) {
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalized));
     } else {
       localStorage.removeItem(USER_STORAGE_KEY);
     }
@@ -56,11 +73,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logoutMutate();
   };
 
+  const resolvedRole = (getRoleName(user?.role) as UserRole) || null;
+
   return (
     <AuthContext.Provider
       value={{
         user,
-        role: user?.role || null,
+        role: resolvedRole,
         isAuthenticated: !!user,
         isLoading,
         isLoggingOut,

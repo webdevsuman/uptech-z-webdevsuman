@@ -1,13 +1,18 @@
 export type UserRole = "student" | "instructor" | "super-admin" | "sub-admin";
 
 export interface IUser {
-  id: string;
+  _id?: string;
+  id?: string;
   name: string;
   email: string;
-  role: UserRole;
+  role: UserRole | { _id: string; name: UserRole };
   isVerified: boolean;
   avatar?: string;
   profilePicture?: string;
+  bio?: string;
+  qualification?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface IAuthResponseData {

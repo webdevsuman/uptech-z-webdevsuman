@@ -1,10 +1,132 @@
+import mongoose from "mongoose";
 import User from "../models/user.model.js";
 import Role from "../models/role.model.js";
 import httpStatusCodes from "../utils/httpStatusCodes.js";
 import logger from "../utils/logger.js";
 import ROLES from "../constants/roles.constant.js";
 
+/**
+ * Helper to fetch user profile document with populated string role via MongoDB aggregation
+ */
+const fetchUserProfileAggregate = async (userId) => {
+  const objectId =
+    userId instanceof mongoose.Types.ObjectId
+      ? userId
+      : new mongoose.Types.ObjectId(userId);
+
+  const [user] = await User.aggregate([
+    {
+      $match: { _id: objectId },
+    },
+    {
+      $lookup: {
+        from: "roles",
+        localField: "role",
+        foreignField: "_id",
+        as: "roleData",
+      },
+    },
+    {
+      $unwind: {
+        path: "$roleData",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $project: {
+        password: 0,
+        refreshToken: 0,
+        resetToken: 0,
+        resetTokenExpiryTime: 0,
+      },
+    },
+    {
+      $addFields: {
+        role: { $ifNull: ["$roleData.name", "$role"] },
+      },
+    },
+    {
+      $project: {
+        roleData: 0,
+      },
+    },
+  ]);
+
+  return user || null;
+};
+
 class UserController {
+  async getProfile(req, res) {
+    try {
+      const userId = req.user?._id;
+      if (!userId) {
+        return res.status(httpStatusCodes.UNAUTHORIZED).json({
+          success: false,
+          message: "Unauthorized",
+        });
+      }
+
+      const user = await fetchUserProfileAggregate(userId);
+      if (!user) {
+        return res.status(httpStatusCodes.NOT_FOUND).json({
+          success: false,
+          message: "User not found",
+        });
+      }
+
+      return res.status(httpStatusCodes.OK).json({
+        success: true,
+        data: user,
+      });
+    } catch (error) {
+      logger.error(`getProfile error: ${error.message}`);
+      return res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  async updateProfile(req, res) {
+    try {
+      const userId = req.user._id;
+      const { name, bio, qualification } = req.body;
+
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(httpStatusCodes.NOT_FOUND).json({
+          success: false,
+          message: "User not found",
+        });
+      }
+
+      if (name && name.trim()) user.name = name.trim();
+      if (bio !== undefined) user.bio = bio.trim();
+      if (qualification !== undefined) user.qualification = qualification.trim();
+
+      // If new profile picture was uploaded via Cloudinary middleware
+      if (req.file?.cloudinary?.secure_url) {
+        user.profilePicture = req.file.cloudinary.secure_url;
+      }
+
+      await user.save();
+
+      const updatedUser = await fetchUserProfileAggregate(userId);
+
+      return res.status(httpStatusCodes.OK).json({
+        success: true,
+        message: "Profile updated successfully",
+        data: updatedUser,
+      });
+    } catch (error) {
+      logger.error(`updateProfile error: ${error.message}`);
+      return res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
   // 1. View: List all users with pagination, search & filters
   async getUsers(req, res) {
     try {

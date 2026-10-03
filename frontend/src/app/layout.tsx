@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Wrapper from "../../layout/wrapper/Wrapper";
-import TanstackProvider from "@/utils/TanstackProvider";
+import TanstackProvider from "@/lib/TanstackProvider";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import { AuthProvider } from "@/context/AuthContext";
 import { Toaster } from "sonner";
@@ -45,4 +45,3 @@ export default function RootLayout({
     </html>
   );
 }
-

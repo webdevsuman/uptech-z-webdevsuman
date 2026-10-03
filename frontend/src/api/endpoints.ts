@@ -51,4 +51,7 @@ export const endpoints = {
     ) =>
       `courses/${id}/sections/${sectionId}/lectures/${lectureId}/resources/${resourceId}`,
   },
+  users: {
+    profile: "users/profile",
+  },
 };
