@@ -39,7 +39,12 @@ export const endpoints = {
   },
   courses: {
     list: 'courses',
+    listAdmin: 'courses/admin',
     details: (id: string) => `courses/${id}`,
+    updateStatus: (id: string) => `courses/${id}/status`,
+    toggleFeatured: (id: string) => `courses/${id}/featured`,
+    toggleTrending: (id: string) => `courses/${id}/trending`,
+    delete: (id: string) => `courses/${id}`,
   },
   categories: {
     list: 'categories',

@@ -25,7 +25,7 @@
 ## Admin Panel
 
 - **Users module** - View, Edit, Verify, Deactivate
-- **Courses module** - Approve, Reject, Edit content
+- **Courses module** - List (Search, Status Filter, Pagination, Category), Approve, Reject, Revert to Draft, Feature/Trending Toggles, Deep Curriculum Inspection & Delete
 - **Category module** -
 - **Tags module** - List, Create, Edit, Delete with Live Badge preview & Deletion Modal
 - **Reviews module** -

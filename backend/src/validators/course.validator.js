@@ -24,5 +24,11 @@ export const updateCourseSchema = z.object({
     .optional(),
   language: z.string().optional(),
   price: z.coerce.number().min(0, "Price cannot be negative").optional(),
-  status: z.enum(["draft", "under_review", "published"]).optional(),
+  status: z.enum(["draft", "under_review", "published", "rejected"]).optional(),
+});
+
+export const updateCourseStatusSchema = z.object({
+  status: z.enum(["draft", "under_review", "published", "rejected"], {
+    required_error: "Status is required",
+  }),
 });

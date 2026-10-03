@@ -9,6 +9,7 @@ import Validation from "../validators/index.js";
 import {
   createCourseSchema,
   updateCourseSchema,
+  updateCourseStatusSchema,
 } from "../validators/course.validator.js";
 import {
   uploadImage,
@@ -35,6 +36,14 @@ courseRouter.get(
   authMiddleware,
   checkPermission(PERMISSIONS.COURSE_CREATE),
   courseController.getInstructorCourses,
+);
+
+// 4.1 Admin: list all courses (draft, review, published, rejected)
+courseRouter.get(
+  "/admin",
+  authMiddleware,
+  checkPermission(PERMISSIONS.COURSE_READ_ALL),
+  courseController.getAdminCourses,
 );
 
 // 5. Step 1: Create Course Draft (RBAC + Zod validation)
@@ -162,6 +171,15 @@ courseRouter.patch(
   authMiddleware,
   checkPermission(PERMISSIONS.COURSE_UPDATE),
   courseController.toggleTrending,
+);
+
+// 10. Admin: Update course status (Approve, Reject, Draft, Review)
+courseRouter.patch(
+  "/:id/status",
+  authMiddleware,
+  checkPermission(PERMISSIONS.COURSE_APPROVE),
+  Validation.validate(updateCourseStatusSchema),
+  courseController.updateCourseStatus,
 );
 
 export default courseRouter;

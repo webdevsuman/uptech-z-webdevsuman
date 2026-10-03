@@ -39,7 +39,7 @@ const courseSchema = new mongoose.Schema(
     // Status & Publishing
     status: {
       type: String,
-      enum: ["draft", "under_review", "published"],
+      enum: ["draft", "under_review", "published", "rejected"],
       default: "draft",
     },
 

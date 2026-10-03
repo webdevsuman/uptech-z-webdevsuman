@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Course from "../models/frontend/course.model.js";
 import Category from "../models/frontend/category.model.js";
 import { deleteFromCloudinary } from "../config/cloudinary.js";
@@ -364,6 +365,197 @@ class CourseController {
       return res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: error.message || "Failed to toggle trending status",
+      });
+    }
+  }
+
+  // Admin: Get all courses with status, category, level filters, search & pagination using aggregation
+  async getAdminCourses(req, res) {
+    try {
+      const {
+        search,
+        status,
+        category,
+        level,
+        page = 1,
+        limit = 10,
+        sort = "newest",
+      } = req.query;
+
+      const matchStage = {};
+
+      if (status && status !== "all") {
+        matchStage.status = status;
+      }
+
+      if (category && category !== "all" && mongoose.isValidObjectId(category)) {
+        matchStage.category = new mongoose.Types.ObjectId(category);
+      }
+
+      if (level && level !== "all" && level !== "All") {
+        matchStage.level = level;
+      }
+
+      if (search && search.trim()) {
+        const searchRegex = new RegExp(search.trim(), "i");
+        matchStage.$or = [{ title: searchRegex }, { subtitle: searchRegex }];
+      }
+
+      let sortStage = { createdAt: -1 };
+      if (sort === "oldest") sortStage = { createdAt: 1 };
+      else if (sort === "price-low") sortStage = { price: 1 };
+      else if (sort === "price-high") sortStage = { price: -1 };
+      else if (sort === "popular") sortStage = { viewsCount: -1 };
+
+      const pageNumber = Math.max(1, parseInt(page, 10) || 1);
+      const limitNumber = Math.max(1, parseInt(limit, 10) || 10);
+      const skip = (pageNumber - 1) * limitNumber;
+
+      const [result] = await Course.aggregate([
+        { $match: matchStage },
+        { $sort: sortStage },
+        {
+          $facet: {
+            metadata: [{ $count: "total" }],
+            courses: [
+              { $skip: skip },
+              { $limit: limitNumber },
+              {
+                $lookup: {
+                  from: "categories",
+                  localField: "category",
+                  foreignField: "_id",
+                  as: "category",
+                  pipeline: [
+                    {
+                      $project: {
+                        name: 1,
+                        icon: 1,
+                      },
+                    },
+                  ],
+                },
+              },
+              {
+                $unwind: {
+                  path: "$category",
+                  preserveNullAndEmptyArrays: true,
+                },
+              },
+              {
+                $lookup: {
+                  from: "users",
+                  localField: "instructor",
+                  foreignField: "_id",
+                  as: "instructor",
+                  pipeline: [
+                    {
+                      $project: {
+                        name: 1,
+                        email: 1,
+                      },
+                    },
+                  ],
+                },
+              },
+              {
+                $unwind: {
+                  path: "$instructor",
+                  preserveNullAndEmptyArrays: true,
+                },
+              },
+              {
+                $project: {
+                  title: 1,
+                  subtitle: 1,
+                  category: 1,
+                  instructor: 1,
+                  price: 1,
+                  status: 1,
+                  level: 1,
+                  language: 1,
+                  thumbnail: 1,
+                  isFeatured: 1,
+                  isTrending: 1,
+                  viewsCount: 1,
+                  createdAt: 1,
+                  updatedAt: 1,
+                  sectionsCount: {
+                    $size: { $ifNull: ["$sections", []] },
+                  },
+                  lecturesCount: {
+                    $reduce: {
+                      input: { $ifNull: ["$sections", []] },
+                      initialValue: 0,
+                      in: {
+                        $add: [
+                          "$$value",
+                          { $size: { $ifNull: ["$$this.lectures", []] } },
+                        ],
+                      },
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      ]);
+
+      const courses = result?.courses || [];
+      const total = result?.metadata?.[0]?.total || 0;
+
+      return res.status(httpStatusCodes.OK).json({
+        success: true,
+        data: courses,
+        pagination: {
+          total,
+          page: pageNumber,
+          limit: limitNumber,
+          totalPages: Math.ceil(total / limitNumber),
+        },
+      });
+    } catch (error) {
+      logger.error(`getAdminCourses error: ${error.message}`);
+      return res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: error.message || "Failed to fetch admin courses",
+      });
+    }
+  }
+
+  // Admin: Update course status (approve, reject, draft, under_review)
+  async updateCourseStatus(req, res) {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+
+      const course = await Course.findById(id);
+      if (!course) {
+        return res.status(httpStatusCodes.NOT_FOUND).json({
+          success: false,
+          message: "Course not found",
+        });
+      }
+
+      course.status = status;
+      await course.save();
+
+      await course.populate([
+        { path: "category", select: "name icon" },
+        { path: "instructor", select: "name email" },
+      ]);
+
+      return res.status(httpStatusCodes.OK).json({
+        success: true,
+        message: `Course status successfully updated to ${status}`,
+        data: course,
+      });
+    } catch (error) {
+      logger.error(`updateCourseStatus error: ${error.message}`);
+      return res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: error.message || "Failed to update course status",
       });
     }
   }

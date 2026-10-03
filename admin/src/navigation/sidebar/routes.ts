@@ -25,6 +25,7 @@ export const ROUTES = {
 
   courses: {
     list: '/courses/list',
+    details: (id: string) => `/courses/details/${id}`,
   },
 
   categories: {
