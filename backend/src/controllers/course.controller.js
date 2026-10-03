@@ -141,7 +141,10 @@ class CourseController {
       const { id } = req.params;
       const course = await Course.findById(id)
         .populate("category", "name icon")
-        .populate("instructor", "name email");
+        .populate(
+          "instructor",
+          "name email bio qualification profilePicture"
+        );
 
       if (!course) {
         return res.status(httpStatusCodes.NOT_FOUND).json({

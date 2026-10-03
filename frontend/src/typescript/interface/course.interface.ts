@@ -63,6 +63,7 @@ export interface ICourse {
   isTrending?: boolean;
   viewsCount?: number;
   rating?: number;
+  reviewsCount?: number;
   sections?: ISection[];
   createdAt?: string;
   updatedAt?: string;

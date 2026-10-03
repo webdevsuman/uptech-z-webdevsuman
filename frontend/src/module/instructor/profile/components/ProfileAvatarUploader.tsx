@@ -73,7 +73,7 @@ export const ProfileAvatarUploader: React.FC<ProfileAvatarUploaderProps> = ({
 
       <Stack spacing={1}>
         <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-          Instructor Profile Photo
+          Profile Photo
         </Typography>
         <Typography variant="caption" color="text.secondary">
           Upload a clear headshot. Allowed: JPG, PNG, WEBP. Max 5MB.

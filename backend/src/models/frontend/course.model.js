@@ -47,6 +47,8 @@ const courseSchema = new mongoose.Schema(
     isFeatured: { type: Boolean, default: false },
     isTrending: { type: Boolean, default: false },
     viewsCount: { type: Number, default: 0, min: 0 },
+    rating: { type: Number, default: 0, min: 0, max: 5 },
+    reviewsCount: { type: Number, default: 0, min: 0 },
 
     // Curriculum & Syllabus
     sections: [

@@ -1,130 +1,162 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React from "react";
 import {
-  Box,
   Card,
   CardContent,
   Typography,
-  Rating,
-  TextField,
-  Button,
+  CircularProgress,
+  Box,
+  Alert,
 } from "@mui/material";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { useAuth } from "@/context/AuthContext";
+import {
+  useCourseReviews,
+  useReviewEligibility,
+  useCreateOrUpdateReview,
+} from "@/hooks/react-query/useReviews";
+import ReviewStatsSummary from "./components/ReviewStatsSummary";
+import ReviewItem from "./components/ReviewItem";
+import ReviewForm from "./components/ReviewForm";
+import { sToast } from "@/components/ui/alert/stoast";
 
-export interface Review {
-  id: string;
-  course_id: string;
-  user_id: string;
-  rating: number;
-  comment: string;
-  created_at: string;
+interface CourseReviewsProps {
+  courseId: string;
 }
 
-export default function CourseReviews({ courseId }: { courseId: string }) {
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [newRating, setNewRating] = useState<number | null>(0);
-  const [newComment, setNewComment] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  // Current logged in user
+export default function CourseReviews({ courseId }: CourseReviewsProps) {
   const { user } = useAuth();
-  const userId = user?.id ?? null;
+  const isAuthenticated = Boolean(user);
 
-  // 🔹 Fetch reviews for this course
-  // useEffect(() => {
-  //   if (!courseId) return;
-  //   const fetchReviews = async () => {
-  //     const { data, error } = await supabase
-  //       .from("reviews")
-  //       .select("*")
-  //       .eq("course_id", courseId)
-  //       .order("created_at", { ascending: false });
-  //     if (!error && data) setReviews(data as Review[]);
-  //   };
-  //   fetchReviews();
-  // }, [courseId]);
+  const { data: reviewsData, isLoading: isLoadingReviews } = useCourseReviews(courseId);
+  const { data: eligibility, isLoading: isLoadingEligibility } = useReviewEligibility(
+    courseId,
+    isAuthenticated
+  );
 
-  // // 🔹 Submit review
-  // const handleSubmit = async () => {
-  //   if (!userId) return alert("Login required to leave a review.");
-  //   if (!newRating) return alert("Please provide a rating");
+  const { mutate: submitReview, isPending: isSubmitting } = useCreateOrUpdateReview(courseId);
 
-  //   setLoading(true);
-  //   const { data, error } = await supabase
-  //     .from("reviews")
-  //     .insert({
-  //       user_id: userId,
-  //       course_id: courseId,
-  //       rating: newRating,
-  //       comment: newComment,
-  //     })
-  //     .select()
-  //     .single();
+  const handleReviewSubmit = (payload: {
+    courseId: string;
+    rating: number;
+    comment: string;
+  }) => {
+    submitReview(payload, {
+      onSuccess: () => {
+        sToast.success("Your review has been submitted successfully!");
+      },
+      onError: (err: unknown) => {
+        const error = err as { response?: { data?: { message?: string } } };
+        sToast.error(error.response?.data?.message || "Failed to submit review");
+      },
+    });
+  };
 
-  //   setLoading(false);
-
-  //   if (error) {
-  //     console.error("Error adding review:", error.message);
-  //   } else if (data) {
-  //     setReviews([data as Review, ...reviews]); // optimistic update
-  //     setNewRating(0);
-  //     setNewComment("");
-  //   }
-  // };
+  const reviews = reviewsData?.reviews || [];
+  const stats = reviewsData?.stats || {
+    avgRating: 0,
+    totalReviews: 0,
+    distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+    distributionPercentages: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+  };
 
   return (
-    <div className="md:px-30 px-5">
-      <Box className="flex flex-col gap-6 border-1 border-gray-400 px-10 pb-5">
-        {/* Review submission form */}
-        <Card>
-          <CardContent>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              Leave a Review
-            </Typography>
-            <Rating
-              value={newRating}
-              onChange={(_, val) => setNewRating(val)}
-              precision={1}
-            />
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              label="Write your feedback"
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              sx={{ mt: 2, mb: 2 }}
-            />
-            <Button
-              variant="contained"
-              // onClick={handleSubmit}
-              disabled={loading}
-            >
-              {loading ? "Submitting..." : "Submit Review"}
-            </Button>
-          </CardContent>
-        </Card>
+    <div className="md:px-24 px-5 max-w-7xl mx-auto my-8">
+      <Card
+        elevation={0}
+        sx={{
+          border: "1px solid",
+          borderColor: "divider",
+          borderRadius: 3,
+          p: 3,
+        }}
+      >
+        <CardContent sx={{ p: 0 }}>
+          <Typography variant="h6" sx={{ fontWeight: 800, mb: 3, color: "#1c1d1f" }}>
+            Student Feedback & Reviews
+          </Typography>
 
-        {/* List of reviews */}
-        <Typography className="!font-semibold text-center uppercase">What students say about this course</Typography>
-        <Box className="grid grid-cols-1 md:grid-cols-2 gap-4 border-1 border-gray-400">
-          {reviews.map((r) => (
-            <Card key={r.id}>
-              <CardContent>
-                <Rating value={r.rating} readOnly />
-                <Typography sx={{ mt: 1 }}>{r.comment}</Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {new Date(r.created_at).toLocaleDateString()}
-                </Typography>
-              </CardContent>
-            </Card>
-          ))}
-          {reviews.length === 0 && (
-            <Typography className="!my-5 px-5 italic">No reviews yet. Be the first!</Typography>
+          {/* Rating Summary Header with Distribution Bars */}
+          {isLoadingReviews ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+              <CircularProgress size={36} sx={{ color: "#5624D0" }} />
+            </Box>
+          ) : (
+            <ReviewStatsSummary stats={stats} />
           )}
-        </Box>
-      </Box>
+
+          {/* Conditional Review Form or Permission Notice */}
+          {!isAuthenticated ? (
+            <Alert
+              severity="info"
+              icon={<LockOutlinedIcon fontSize="inherit" />}
+              sx={{ mb: 4, borderRadius: 2 }}
+            >
+              Please log in with an enrolled student account to rate and review this course.
+            </Alert>
+          ) : isLoadingEligibility ? (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, py: 2, mb: 2 }}>
+              <CircularProgress size={20} />
+              <Typography variant="body2" color="text.secondary">
+                Checking review permissions...
+              </Typography>
+            </Box>
+          ) : eligibility?.isInstructor ? (
+            <Alert
+              severity="warning"
+              icon={<InfoOutlinedIcon fontSize="inherit" />}
+              sx={{ mb: 4, borderRadius: 2 }}
+            >
+              You are the instructor of this course. Instructors cannot rate or review their own courses.
+            </Alert>
+          ) : !eligibility?.isEnrolled ? (
+            <Alert
+              severity="info"
+              icon={<SchoolOutlinedIcon fontSize="inherit" />}
+              sx={{ mb: 4, borderRadius: 2 }}
+            >
+              Only students who have purchased and enrolled in this course can leave a review.
+            </Alert>
+          ) : (
+            <ReviewForm
+              courseId={courseId}
+              existingReview={eligibility.existingReview}
+              isSubmitting={isSubmitting}
+              onSubmit={handleReviewSubmit}
+            />
+          )}
+
+          {/* Review List */}
+          {reviews.length === 0 ? (
+            <Box
+              sx={{
+                p: 4,
+                textAlign: "center",
+                borderRadius: 2,
+                border: "1px dashed",
+                borderColor: "grey.300",
+                bgcolor: "grey.50",
+              }}
+            >
+              <Typography variant="body1" sx={{ fontWeight: 600, color: "text.primary" }}>
+                No reviews yet
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                Enrolled students can be the first to rate and share their experience!
+              </Typography>
+            </Box>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {reviews.map((r) => (
+                <ReviewItem key={r._id} review={r} />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

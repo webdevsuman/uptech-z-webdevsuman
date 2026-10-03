@@ -16,3 +16,19 @@ export enum CourseQueryEnum {
 export enum AnnouncementQueryEnum {
   Announcements = "announcements",
 }
+
+export enum ReviewQueryEnum {
+  CourseReviews = "course-reviews",
+  ReviewEligibility = "review-eligibility",
+  MyReviews = "my-reviews",
+}
+
+export enum EnrollmentQueryEnum {
+  EnrollmentStatus = "enrollment-status",
+  MyEnrollments = "my-enrollments",
+}
+
+export enum WishlistQueryEnum {
+  WishlistStatus = "wishlist-status",
+  MyWishlist = "my-wishlist",
+}

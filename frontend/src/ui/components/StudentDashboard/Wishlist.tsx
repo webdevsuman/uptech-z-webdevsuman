@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import React, { useState } from "react";
+import Link from "next/link";
 import {
   Box,
   Card,
@@ -11,189 +11,241 @@ import {
   IconButton,
   Tooltip,
   Button,
+  CircularProgress,
+  Stack,
+  Rating,
 } from "@mui/material";
 import FavoriteIcon from "@mui/icons-material/Favorite";
-import {
-  WishlistItem,
-  WishlistRow,
-} from "@/typescript/interface/studentSection";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import { useMyWishlist, useToggleWishlist } from "@/hooks/react-query/useWishlist";
+import { useEnrollCourse } from "@/hooks/react-query/useEnrollment";
 import { getImageUrl } from "@/utils/getImageUrl";
-import Swal from "sweetalert2";
+import { sToast } from "@/components/ui/alert/stoast";
 
 export default function Wishlist() {
-  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
-  const [enrolledCourses, setEnrolledCourses] = useState<string[]>([]);
-  const [userId, setUserId] = useState<string | null>(null);
+  const { data: wishlist = [], isLoading, isError } = useMyWishlist();
+  const [enrollingCourseId, setEnrollingCourseId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchWishlist = async () => {
-      const user = (await supabase.auth.getUser()).data.user;
-      if (!user) return;
-      setUserId(user.id);
+  const { mutate: toggleWishlist, isPending: isRemoving } = useToggleWishlist("");
+  const { mutate: enrollCourse } = useEnrollCourse("");
 
-      // Step 1: fetch wishlist with course info
-      const { data, error } = await supabase
-        .from("wishlist")
-        .select(
-          `
-          id,
-          courses (
-            id,
-            title,
-            image_path,
-            price,
-            instructor_id
-          )
-        `
-        )
-        .eq("user_id", user.id);
-
-      if (error) {
-        console.error("Error fetching wishlist:", error.message);
-        return;
+  const handleRemove = (courseId: string) => {
+    toggleWishlist(
+      { courseId },
+      {
+        onSuccess: () => {
+          sToast.info("Removed from wishlist");
+        },
+        onError: (err: unknown) => {
+          const error = err as { response?: { data?: { message?: string } } };
+          sToast.error(error.response?.data?.message || "Failed to remove course");
+        },
       }
-
-      if (data) {
-        const rows = data as unknown as (WishlistRow & { id: string })[];
-
-        const instructorIds = rows.map((w) => w.courses.instructor_id);
-
-        // Step 2: fetch instructors in one go
-        const { data: instructors, error: instructorError } = await supabase
-          .from("instructors")
-          .select("id, name, photo_url")
-          .in("id", instructorIds);
-
-        if (instructorError) {
-          console.error("Error fetching instructors:", instructorError.message);
-          return;
-        }
-
-        // Step 3: map rows into wishlist items
-        const items: WishlistItem[] = rows.map((w) => {
-          const instructor = instructors?.find(
-            (ins) => ins.id === w.courses.instructor_id
-          );
-          return {
-            id: w.courses.id,
-            title: w.courses.title,
-            thumbnail: w.courses.image_path,
-            price: w.courses.price,
-            instructor: {
-              id: instructor?.id ?? "",
-              name: instructor?.name ?? "Unknown",
-              photo_url: instructor?.photo_url ?? null,
-            },
-            wishlist_id: w.id, // store wishlist row id for delete
-          };
-        });
-
-        setWishlist(items);
-
-        // Step 4: fetch enrolled courses
-        const { data: enrollments, error: enrollError } = await supabase
-          .from("enrollments")
-          .select("course_id")
-          .eq("user_id", user.id);
-
-        if (!enrollError && enrollments) {
-          setEnrolledCourses(enrollments.map((e) => e.course_id));
-        }
-      }
-    };
-
-    fetchWishlist();
-  }, []);
-
-  const handleEnroll = async (courseId: string) => {
-    if (!userId) return alert("Login required");
-
-    const { error } = await supabase.from("enrollments").insert({
-      user_id: userId,
-      course_id: courseId,
-    });
-
-    if (!error) {
-      setEnrolledCourses((prev) => [...prev, courseId]);
-      // alert("Successfully Enrolled 🎉");
-      Swal.fire("Successfully Enrolled 🎉");
-    } else {
-      console.error(error.message);
-    }
+    );
   };
 
-  const handleRemove = async (wishlistId: string) => {
-    const { error } = await supabase
-      .from("wishlist")
-      .delete()
-      .eq("id", wishlistId);
-
-    if (!error) {
-      setWishlist((prev) => prev.filter((w) => w.wishlist_id !== wishlistId));
-      // alert("Removed from Wishlist ❌");
-      Swal.fire("Removed from Wishlist ❌");
-    } else {
-      console.error(error.message);
-    }
+  const handleEnroll = (courseId: string) => {
+    setEnrollingCourseId(courseId);
+    enrollCourse(
+      { courseId },
+      {
+        onSuccess: () => {
+          sToast.success("Successfully enrolled in course!");
+          setEnrollingCourseId(null);
+        },
+        onError: (err: unknown) => {
+          const error = err as { response?: { data?: { message?: string } } };
+          sToast.error(error.response?.data?.message || "Failed to enroll in course");
+          setEnrollingCourseId(null);
+        },
+      }
+    );
+    toggleWishlist({courseId});
   };
+
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+        <CircularProgress size={40} sx={{ color: "#5624D0" }} />
+      </Box>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Box sx={{ textAlign: "center", py: 6 }}>
+        <Typography color="error" variant="body1">
+          Failed to load wishlist items. Please try again.
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (wishlist.length === 0) {
+    return (
+      <Box
+        sx={{
+          textAlign: "center",
+          py: 8,
+          px: 4,
+          borderRadius: 3,
+          border: "1px dashed",
+          borderColor: "grey.300",
+          bgcolor: "grey.50",
+          maxWidth: 600,
+          mx: "auto",
+        }}
+      >
+        <FavoriteBorderIcon sx={{ fontSize: 48, color: "text.secondary", mb: 1.5 }} />
+        <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+          Your wishlist is empty
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          Explore courses and click the heart icon to save courses for later!
+        </Typography>
+        <Link href="/" passHref style={{ textDecoration: "none" }}>
+          <Button
+            variant="contained"
+            sx={{
+              bgcolor: "#5624D0",
+              fontWeight: 700,
+              textTransform: "none",
+              px: 3,
+              "&:hover": { bgcolor: "#401b9c" },
+            }}
+          >
+            Explore Courses
+          </Button>
+        </Link>
+      </Box>
+    );
+  }
 
   return (
-    <Box className="grid grid-cols-3 gap-6">
-      {wishlist.map((item) => (
-        <Card elevation={4} key={item.id}>
-          <CardMedia
-            component="img"
-            height="140"
-            image={getImageUrl(item.thumbnail)}
-            alt={item.title}
-          />
-          <CardContent>
-            <Typography variant="h6">{item.title}</Typography>
-            <Typography variant="body2" color="text.secondary">
-              {item.instructor.name}
-            </Typography>
-            <Typography variant="subtitle1" sx={{ mt: 1 }}>
-              ₹{item.price}
-            </Typography>
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: {
+          xs: "1fr",
+          sm: "repeat(2, 1fr)",
+          md: "repeat(3, 1fr)",
+        },
+        gap: 3,
+      }}
+    >
+      {wishlist.map((item) => {
+        const course = item.course;
+        if (!course) return null;
+        const thumbnailSrc = getImageUrl(course.thumbnail);
+        const instructorName =
+          typeof course.instructor === "object" && course.instructor !== null
+            ? course.instructor.name
+            : "Instructor";
 
-            {/* Actions */}
-            <Box
-              sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}
-            >
+        const isCurrentEnrolling = enrollingCourseId === course._id;
+
+        return (
+          <Card
+            key={item._id}
+            elevation={2}
+            sx={{
+              borderRadius: 3,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              transition: "transform 0.2s, box-shadow 0.2s",
+              "&:hover": {
+                transform: "translateY(-4px)",
+                boxShadow: 6,
+              },
+            }}
+          >
+            <Box>
+              <CardMedia
+                component="img"
+                height="150"
+                image={thumbnailSrc}
+                alt={course.title}
+                sx={{ objectFit: "cover" }}
+              />
+              <CardContent sx={{ pb: 1 }}>
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    fontWeight: 700,
+                    lineHeight: 1.3,
+                    mb: 0.5,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                  }}
+                >
+                  {course.title}
+                </Typography>
+
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+                  {instructorName}
+                </Typography>
+
+                <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 1 }}>
+                  <Rating
+                    value={course.rating || 0}
+                    precision={0.1}
+                    readOnly
+                    size="small"
+                  />
+                  <Typography variant="caption" color="text.secondary">
+                    ({course.reviewsCount || 0})
+                  </Typography>
+                </Stack>
+
+                <Typography variant="h6" sx={{ fontWeight: 800, color: "#1c1d1f" }}>
+                  {course.price && course.price > 0 ? `₹${course.price}` : "Free"}
+                </Typography>
+              </CardContent>
+            </Box>
+
+            <Box sx={{ p: 2, pt: 0, display: "flex", alignItems: "center", gap: 1 }}>
+              <Button
+                fullWidth
+                variant="contained"
+                startIcon={
+                  isCurrentEnrolling ? (
+                    <CircularProgress size={18} color="inherit" />
+                  ) : (
+                    <ShoppingCartIcon />
+                  )
+                }
+                onClick={() => handleEnroll(course._id)}
+                disabled={isCurrentEnrolling}
+                sx={{
+                  bgcolor: "#5624D0",
+                  fontWeight: 700,
+                  textTransform: "none",
+                  borderRadius: 2,
+                  "&:hover": { bgcolor: "#401b9c" },
+                }}
+              >
+                {isCurrentEnrolling ? "Enrolling..." : "Enroll Now"}
+              </Button>
+
               <Tooltip title="Remove from Wishlist">
                 <IconButton
                   color="error"
-                  onClick={() => handleRemove(item.wishlist_id!)}
+                  disabled={isRemoving}
+                  onClick={() => handleRemove(course._id)}
+                  sx={{ border: "1px solid", borderColor: "divider" }}
                 >
                   <FavoriteIcon />
                 </IconButton>
               </Tooltip>
-
-              {enrolledCourses.includes(item.id) ? (
-                <Button variant="contained" disabled>
-                  Enrolled
-                </Button>
-              ) : (
-                <Button
-                  variant="contained"
-                  onClick={() => handleEnroll(item.id)}
-                >
-                  Enroll
-                </Button>
-              )}
             </Box>
-          </CardContent>
-        </Card>
-      ))}
-
-      {wishlist.length === 0 && (
-        <Typography
-          variant="body1"
-          sx={{ gridColumn: "1/-1", textAlign: "center" }}
-        >
-          Your wishlist is empty.
-        </Typography>
-      )}
+          </Card>
+        );
+      })}
     </Box>
   );
 }

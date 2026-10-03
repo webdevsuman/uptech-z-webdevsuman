@@ -1,149 +1,291 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import { Box, Card, CardContent, Button, Typography } from "@mui/material";
-import jsPDF from "jspdf";
-
-interface Certificate {
-  id: string;
-  course_id: string;
-  issued_at: string;
-  courses: {
-    title: string;
-  };
-}
+import React, { useRef, useState } from "react";
+import {
+  Box,
+  Card,
+  CardContent,
+  Button,
+  Typography,
+  CircularProgress,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Stack,
+} from "@mui/material";
+import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
+import DownloadIcon from "@mui/icons-material/Download";
+import CloseIcon from "@mui/icons-material/Close";
+import { useMyEnrollments, IMyEnrollment } from "@/hooks/react-query/useEnrollment";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Certificates() {
-  const [certificates, setCertificates] = useState<Certificate[]>([]);
-  const [userName, setUserName] = useState<string>("");
+  const { data: enrollments = [], isLoading, isError } = useMyEnrollments();
+  const { user } = useAuth();
+  const [selectedEnrollment, setSelectedEnrollment] = useState<IMyEnrollment | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const user = (await supabase.auth.getUser()).data.user;
-      if (!user) return;
-      // console.log("Certified user data:", user);
+  const studentName = user?.name || "Student Learner";
 
-      setUserName(user.user_metadata?.display_name || "Student");
+  const renderCertificateOnCanvas = (courseTitle: string, dateStr: string) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-      // Fetch certificates with course info
-      const { data, error } = await supabase
-        .from("certificates")
-        .select("id, course_id, issued_at, courses(title)")
-        .eq("user_id", user.id);
+    // Canvas size (16:9 high resolution)
+    canvas.width = 1600;
+    canvas.height = 900;
 
-      if (!error && data) {
-        setCertificates(data as unknown as Certificate[]);
-      } else {
-        console.error("Error fetching certificates:", error);
-      }
-    };
-    fetchData();
-  }, []);
+    // Background gradient
+    const bgGradient = ctx.createLinearGradient(0, 0, 1600, 900);
+    bgGradient.addColorStop(0, "#ffffff");
+    bgGradient.addColorStop(1, "#f9fafb");
+    ctx.fillStyle = bgGradient;
+    ctx.fillRect(0, 0, 1600, 900);
 
-  const generateCertificate = (courseTitle: string, issuedAt: string) => {
-    const doc = new jsPDF("landscape", "pt", "a4"); // landscape A4
+    // Decorative Borders
+    ctx.strokeStyle = "#5624D0";
+    ctx.lineWidth = 14;
+    ctx.strokeRect(30, 30, 1540, 840);
 
-    // Colors
-    const primaryColor = "#2E86C1";
-    const borderColor = "#000000";
+    ctx.strokeStyle = "#b4690e";
+    ctx.lineWidth = 4;
+    ctx.strokeRect(46, 46, 1508, 808);
 
-    // Page size
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
+    // Header Badge
+    ctx.fillStyle = "#5624D0";
+    ctx.font = "bold 28px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("UPTECH-Z ACADEMY", 800, 140);
 
-    // 🖼️ Border
-    doc.setDrawColor(borderColor);
-    doc.setLineWidth(4);
-    doc.rect(20, 20, pageWidth - 40, pageHeight - 40); // outer border
-
-    // 🏫 Title
-    doc.setFont("times", "bold");
-    doc.setFontSize(30);
-    doc.setTextColor(primaryColor);
-    doc.text("Certificate of Completion", pageWidth / 2, 100, {
-      align: "center",
-    });
+    // Certificate Title
+    ctx.fillStyle = "#1c1d1f";
+    ctx.font = "bold 56px serif";
+    ctx.fillText("CERTIFICATE OF COMPLETION", 800, 220);
 
     // Subtitle
-    doc.setFontSize(18);
-    doc.setTextColor("#000");
-    doc.text("This is proudly presented to", pageWidth / 2, 160, {
-      align: "center",
-    });
+    ctx.fillStyle = "#6a6f73";
+    ctx.font = "italic 24px serif";
+    ctx.fillText("This is proudly presented to", 800, 290);
 
-    // 👤 Student name
-    doc.setFont("times", "bolditalic");
-    doc.setFontSize(26);
-    doc.setTextColor("#111");
-    doc.text(userName, pageWidth / 2, 210, { align: "center" });
+    // Student Name
+    ctx.fillStyle = "#5624D0";
+    ctx.font = "bold 64px serif";
+    ctx.fillText(studentName, 800, 380);
 
-    // Course line
-    doc.setFont("times", "normal");
-    doc.setFontSize(18);
-    doc.text("for successfully completing the course", pageWidth / 2, 260, {
-      align: "center",
-    });
+    // Underline below name
+    ctx.strokeStyle = "#b4690e";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(500, 410);
+    ctx.lineTo(1100, 410);
+    ctx.stroke();
 
-    // 📚 Course name
-    doc.setFont("times", "bold");
-    doc.setFontSize(22);
-    doc.text(courseTitle, pageWidth / 2, 300, { align: "center" });
+    // Body text
+    ctx.fillStyle = "#4b5563";
+    ctx.font = "24px sans-serif";
+    ctx.fillText("for successfully completing the comprehensive online curriculum for", 800, 480);
 
-    // 📅 Issue date
-    doc.setFontSize(14);
-    doc.text(
-      `Issued on: ${new Date(issuedAt).toDateString()}`,
-      pageWidth / 2,
-      350,
-      { align: "center" }
-    );
+    // Course Title
+    ctx.fillStyle = "#111827";
+    ctx.font = "bold 44px sans-serif";
+    ctx.fillText(courseTitle, 800, 560);
 
-    // ✍️ Signature
-    doc.setFont("times", "italic");
-    doc.setFontSize(16);
-    doc.text("Instructor Signature", pageWidth - 180, pageHeight - 100, {
-      align: "center",
-    });
-    doc.line(
-      pageWidth - 280,
-      pageHeight - 110,
-      pageWidth - 80,
-      pageHeight - 110
-    ); // signature line
+    // Date & Signatures
+    ctx.fillStyle = "#374151";
+    ctx.font = "20px sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText(`Issued Date: ${dateStr}`, 200, 750);
 
-    // 🏅 Logo (optional)
-    // If you have a logo image: (must be base64 or public URL)
-    // doc.addImage("/logo.png", "PNG", 40, 40, 100, 100);
+    ctx.textAlign = "right";
+    ctx.fillText("Authorized Signature", 1400, 750);
 
-    // Save
-    doc.save(`${courseTitle}_certificate.pdf`);
+    ctx.strokeStyle = "#9ca3af";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(1180, 720);
+    ctx.lineTo(1400, 720);
+    ctx.stroke();
+
+    ctx.font = "italic 26px serif";
+    ctx.fillStyle = "#5624D0";
+    ctx.fillText("UpTech-Z Team", 1360, 705);
   };
 
+  const handleOpenCertificate = (enrollment: IMyEnrollment) => {
+    setSelectedEnrollment(enrollment);
+    const dateFormatted = new Date(enrollment.createdAt).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    setTimeout(() => {
+      renderCertificateOnCanvas(enrollment.course.title, dateFormatted);
+    }, 150);
+  };
+
+  const handleDownload = () => {
+    const canvas = canvasRef.current;
+    if (!canvas || !selectedEnrollment) return;
+    const image = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.href = image;
+    link.download = `${selectedEnrollment.course.title.replace(/\s+/g, "_")}_Certificate.png`;
+    link.click();
+  };
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+        <CircularProgress size={40} sx={{ color: "#5624D0" }} />
+      </Box>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Box sx={{ textAlign: "center", py: 6 }}>
+        <Typography color="error" variant="body1">
+          Failed to load certificates.
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (enrollments.length === 0) {
+    return (
+      <Box
+        sx={{
+          textAlign: "center",
+          py: 8,
+          px: 4,
+          borderRadius: 3,
+          border: "1px dashed",
+          borderColor: "grey.300",
+          bgcolor: "grey.50",
+          maxWidth: 600,
+          mx: "auto",
+        }}
+      >
+        <WorkspacePremiumIcon sx={{ fontSize: 48, color: "text.secondary", mb: 1.5 }} />
+        <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+          No certificates earned yet
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Enroll in and complete courses to earn official certificates of completion!
+        </Typography>
+      </Box>
+    );
+  }
+
   return (
-    <Box className="grid grid-cols-2 gap-4">
-      {certificates.length > 0 ? (
-        certificates.map((c) => (
-          <Card key={c.id}>
-            <CardContent>
-              <Typography variant="h6">{c.courses.title}</Typography>
-              <Typography color="text.secondary">
-                Issued on: {new Date(c.issued_at).toDateString()}
-              </Typography>
-              <Button
-                onClick={() =>
-                  generateCertificate(c.courses.title, c.issued_at)
-                }
-                variant="contained"
-              >
-                Download Certificate
-              </Button>
-            </CardContent>
-          </Card>
-        ))
-      ) : (
-        <Typography>No certificates yet.</Typography>
-      )}
+    <Box>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
+          gap: 3,
+        }}
+      >
+        {enrollments.map((item) => {
+          const course = item.course;
+          if (!course) return null;
+          const issuedDate = new Date(item.createdAt).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          });
+
+          return (
+            <Card
+              key={item._id}
+              elevation={2}
+              sx={{
+                borderRadius: 3,
+                border: "1px solid",
+                borderColor: "grey.200",
+                p: 2,
+              }}
+            >
+              <CardContent>
+                <Stack spacing={2}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <WorkspacePremiumIcon sx={{ color: "#b4690e", fontSize: 32 }} />
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#1c1d1f" }}>
+                      {course.title}
+                    </Typography>
+                  </Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Issued: {issuedDate}
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    startIcon={<WorkspacePremiumIcon />}
+                    onClick={() => handleOpenCertificate(item)}
+                    sx={{
+                      bgcolor: "#5624D0",
+                      fontWeight: 700,
+                      textTransform: "none",
+                      borderRadius: 2,
+                      "&:hover": { bgcolor: "#401b9c" },
+                    }}
+                  >
+                    View & Download Certificate
+                  </Button>
+                </Stack>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </Box>
+
+      {/* Certificate Modal Dialog */}
+      <Dialog
+        open={Boolean(selectedEnrollment)}
+        onClose={() => setSelectedEnrollment(null)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ m: 0, p: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+            Certificate of Completion
+          </Typography>
+          <IconButton onClick={() => setSelectedEnrollment(null)}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers sx={{ textAlign: "center", p: 2 }}>
+          <canvas
+            ref={canvasRef}
+            style={{
+              width: "100%",
+              height: "auto",
+              borderRadius: 8,
+              border: "1px solid #e5e7eb",
+              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+            }}
+          />
+          <Box sx={{ mt: 3, display: "flex", justifyContent: "center" }}>
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={<DownloadIcon />}
+              onClick={handleDownload}
+              sx={{
+                bgcolor: "#5624D0",
+                fontWeight: 700,
+                textTransform: "none",
+                px: 4,
+                "&:hover": { bgcolor: "#401b9c" },
+              }}
+            >
+              Download High-Res Certificate
+            </Button>
+          </Box>
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 }

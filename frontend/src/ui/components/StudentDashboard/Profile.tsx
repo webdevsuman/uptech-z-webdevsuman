@@ -1,108 +1,242 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import { Avatar, Box, Button, TextField, Typography } from "@mui/material";
-import Swal from "sweetalert2";
-
-interface UserProfile {
-  id: string;
-  email: string;
-  name?: string;
-  avatar_url?: string;
-  bio?: string;
-  role?: string;
-}
+import React, { useState, useEffect } from "react";
+import {
+  Box,
+  Typography,
+  TextField,
+  Button,
+  CircularProgress,
+  Stack,
+  Card,
+  CardContent,
+  Chip,
+  Divider,
+} from "@mui/material";
+import SaveIcon from "@mui/icons-material/Save";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useProfile, useUpdateProfile } from "@/hooks/react-query/useProfile";
+import { useAuth } from "@/context/AuthContext";
+import {
+  profileSchema,
+  ProfileFormData,
+} from "@/module/instructor/profile/zod/profile.zod";
+import { ProfileAvatarUploader } from "@/module/instructor/profile/components/ProfileAvatarUploader";
+import { sToast } from "@/components/ui/alert/stoast";
 
 export default function Profile() {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: userProfile, isLoading } = useProfile();
+  const { setUser } = useAuth();
+  const { mutateAsync: updateProfile, isPending: isSaving } =
+    useUpdateProfile();
 
-//   console.log("User Profile:",profile);
-  
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ProfileFormData>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      name: "",
+      qualification: "",
+      bio: "",
+    },
+  });
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      const { data, error } = await supabase.auth.getUser();
-    //   console.log("Data of user:",data);
-      
-      if (error) {
-        console.error("Error fetching user:", error.message);
-        return;
-      }
-      if (data?.user) {
-        const user = data.user;
-        setProfile({
-          id: user.id,
-          email: user.email ?? "",
-          name: user.user_metadata?.display_name ?? "",
-          avatar_url: user.user_metadata?.avatar_url ?? "",
-          bio: user.user_metadata?.bio ?? "",
-          role: user.user_metadata?.role ?? "",
-        });
-      }
-      setLoading(false);
-    };
-
-    fetchProfile();
-  }, []);
-
-  const handleSave = async () => {
-    if (!profile) return;
-
-    const { error } = await supabase.auth.updateUser({
-      data: {
-        display_name: profile.name,
-        avatar_url: profile.avatar_url,
-        bio: profile.bio,
-      },
-    });
-
-    if (error) {
-      // alert("Failed to update profile: " + error.message);
-      Swal.fire({
-        title: "Failed to update profile",
-        text: error.message,
-        icon: "error",
+    if (userProfile) {
+      reset({
+        name: userProfile.name || "",
+        qualification: userProfile.qualification || "",
+        bio: userProfile.bio || "",
       });
-    } else {
-      // alert("Profile updated!");
-      Swal.fire("Profile updated!");
+    }
+  }, [userProfile, reset]);
 
+  const handleFileSelect = (file: File) => {
+    setSelectedFile(file);
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
+  };
+
+  const onSubmit = async (data: ProfileFormData) => {
+    try {
+      const formData = new FormData();
+      formData.append("name", data.name);
+      if (data.qualification)
+        formData.append("qualification", data.qualification);
+      if (data.bio) formData.append("bio", data.bio);
+      if (selectedFile) formData.append("avatar", selectedFile);
+
+      const res = await updateProfile(formData);
+      if (res.data) {
+        setUser(res.data);
+      }
+      sToast.success("Profile updated successfully!");
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      sToast.error(error.response?.data?.message || "Failed to update profile");
     }
   };
 
-  if (loading) return <Typography>Loading...</Typography>;
-  if (!profile) return <Typography>No profile found</Typography>;
+  if (isLoading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+        <CircularProgress size={40} sx={{ color: "#5624D0" }} />
+      </Box>
+    );
+  }
+
+  if (!userProfile) {
+    return (
+      <Box sx={{ textAlign: "center", py: 6 }}>
+        <Typography color="text.secondary">
+          No profile information available.
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
-    <Box
-      className="border-1 border-gray-400 p-5 rounded-2xl"
+    <Card
+      elevation={0}
       sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 2,
-        maxWidth: 500,
-        alignItems: "center",
+        maxWidth: 700,
+        mx: "auto",
+        border: "1px solid",
+        borderColor: "divider",
+        borderRadius: 3,
+        p: { xs: 2, sm: 4 },
       }}
     >
-      <Avatar src={profile.avatar_url} sx={{ width: 80, height: 80 }} />
-      <Typography variant="body2">Email: {profile.email}</Typography>
+      <CardContent sx={{ p: 0 }}>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h6" sx={{ fontWeight: 800 }}>
+            Student Profile
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Manage your personal profile details and public avatar
+          </Typography>
+        </Box>
 
-      <TextField
-        label="Name"
-        value={profile.name ?? ""}
-        onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-      />
-      <TextField
-        label="Bio"
-        value={profile.bio ?? ""}
-        onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-      />
+        <Divider sx={{ mb: 3 }} />
 
-      <Button onClick={handleSave} variant="contained">
-        Save
-      </Button>
-    </Box>
+        {/* Avatar Uploader & Account Info */}
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={3}
+          sx={{ alignItems: "center", mb: 4 }}
+        >
+          <ProfileAvatarUploader
+            currentImageUrl={userProfile.profilePicture}
+            previewUrl={previewUrl}
+            name={userProfile.name || "Student"}
+            onFileSelect={handleFileSelect}
+            onRemovePreview={() => {
+              setSelectedFile(null);
+              setPreviewUrl(null);
+            }}
+          />
+          <Box sx={{ textAlign: { xs: "center", sm: "left" } }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+              {userProfile.name}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              {userProfile.email}
+            </Typography>
+            <Chip
+              label="Student"
+              size="small"
+              sx={{ bgcolor: "#5624D0", color: "#fff", fontWeight: 700 }}
+            />
+          </Box>
+        </Stack>
+
+        {/* Profile Edit Form */}
+        <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+          <Stack spacing={2.5}>
+            <Controller
+              name="name"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Full Name"
+                  fullWidth
+                  size="small"
+                  error={Boolean(errors.name)}
+                  helperText={errors.name?.message}
+                />
+              )}
+            />
+
+            <Controller
+              name="qualification"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Headline / Education"
+                  placeholder="e.g. Computer Science Student at Tech University"
+                  fullWidth
+                  size="small"
+                  error={Boolean(errors.qualification)}
+                  helperText={errors.qualification?.message}
+                />
+              )}
+            />
+
+            <Controller
+              name="bio"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Biography"
+                  placeholder="Tell instructors and fellow learners about yourself..."
+                  multiline
+                  rows={4}
+                  fullWidth
+                  size="small"
+                  error={Boolean(errors.bio)}
+                  helperText={errors.bio?.message}
+                />
+              )}
+            />
+
+            <Box sx={{ display: "flex", justifyContent: "flex-end", pt: 2 }}>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={isSaving}
+                startIcon={
+                  isSaving ? (
+                    <CircularProgress size={18} color="inherit" />
+                  ) : (
+                    <SaveIcon />
+                  )
+                }
+                sx={{
+                  bgcolor: "#5624D0",
+                  fontWeight: 700,
+                  textTransform: "none",
+                  px: 4,
+                  py: 1,
+                  borderRadius: 2,
+                  "&:hover": { bgcolor: "#401b9c" },
+                }}
+              >
+                {isSaving ? "Saving..." : "Save Profile"}
+              </Button>
+            </Box>
+          </Stack>
+        </Box>
+      </CardContent>
+    </Card>
   );
 }

@@ -60,4 +60,20 @@ export const endpoints = {
     update: (id: string) => `announcements/${id}`,
     delete: (id: string) => `announcements/${id}`,
   },
+  reviews: {
+    courseReviews: (courseId: string) => `reviews/course/${courseId}`,
+    eligibility: (courseId: string) => `reviews/eligibility/${courseId}`,
+    create: "reviews",
+    my: "reviews/my",
+  },
+  enrollments: {
+    enroll: "enrollments",
+    status: (courseId: string) => `enrollments/status/${courseId}`,
+    my: "enrollments/my",
+  },
+  wishlist: {
+    toggle: "wishlist/toggle",
+    status: (courseId: string) => `wishlist/status/${courseId}`,
+    my: "wishlist/my",
+  },
 };

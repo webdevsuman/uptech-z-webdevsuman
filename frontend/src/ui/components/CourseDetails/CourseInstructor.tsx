@@ -1,41 +1,56 @@
+import React from "react";
 import { Card, CardContent, Typography, Avatar, Box } from "@mui/material";
 
 export interface Instructor {
-  id: string;
+  id?: string;
+  _id?: string;
   name: string;
-  bio: string;
+  email?: string;
+  bio?: string;
   photo_url?: string;
-  qualifications: string;
+  profilePicture?: string;
+  qualification?: string;
+  qualifications?: string;
 }
 
 export default function CourseInstructor({
   instructor,
 }: {
-  instructor: Instructor;
+  instructor?: Instructor | null;
 }) {
-  // console.log("Course Instructor:", instructor);
+  if (!instructor) return null;
+
+  const avatarSrc = instructor.profilePicture || instructor.photo_url || "";
+  const qualificationText = instructor.qualification || instructor.qualifications || "Instructor & Course Author";
+  const bioText = instructor.bio || "No biography provided.";
 
   return (
-    <div className="md:px-30 px-5">
-      <Card elevation={4} sx={{ mt: 4, p: 4 }}>
-        <CardContent className="grid grid-cols-5 border-1 border-gray-500 items-center !px-10">
-          <Typography className="col-span-1" variant="h6">
+    <div className="md:px-24 px-5 max-w-7xl mx-auto mt-8">
+      <Card elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3, p: 3 }}>
+        <CardContent sx={{ p: 0 }}>
+          <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
             Instructor
           </Typography>
-          <Box
-            className="col-span-4"
-            sx={{ display: "flex", alignItems: "center", mt: 2, gap: "15px" }}
-          >
+
+          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 3 }}>
             <Avatar
-              src={instructor.photo_url || ""}
+              src={avatarSrc}
               alt={instructor.name}
-              sx={{ mr: 2, width: 64, height: 64 }}
-            />
-            <Box>
-              <Typography variant="h6" className="!font-bold">
+              sx={{ width: 72, height: 72, bgcolor: "#5624D0", fontSize: "1.75rem", fontWeight: 700 }}
+            >
+              {instructor.name.charAt(0)}
+            </Avatar>
+
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary" }}>
                 {instructor.name}
               </Typography>
-              <Typography variant="body1">{instructor.bio}</Typography>
+              <Typography variant="body2" color="primary" sx={{ fontWeight: 600, mb: 1 }}>
+                {qualificationText}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6, whiteSpace: "pre-line" }}>
+                {bioText}
+              </Typography>
             </Box>
           </Box>
         </CardContent>

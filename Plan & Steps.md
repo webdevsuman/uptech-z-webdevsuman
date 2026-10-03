@@ -19,7 +19,7 @@
 
 ## Frontend
 
-- **Student** -> Homepage and all
+- **Student** -> Homepage, Course Details (/courses/:id) with Syllabus, Instructor, Reviews & Enrollment
 - **Instructor** -> `/instructor`
 
 ## Admin Panel

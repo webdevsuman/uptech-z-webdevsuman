@@ -30,7 +30,7 @@ export const AcceleratorCard = ({
     >
       <CardMedia className="max-h-[180px]" component="img" height={200} image={image_path} alt={title} />
       <CardContent>
-        <Typography variant="subtitle1" fontWeight="bold">
+        <Typography variant="subtitle1" sx={{fontWeight:"bold"}}>
           {title}
         </Typography>
 
