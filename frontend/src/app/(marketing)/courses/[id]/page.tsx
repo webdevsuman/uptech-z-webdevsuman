@@ -25,7 +25,8 @@ import {
 import CourseHeader from "@/ui/components/CourseDetails/CourseHeader";
 import CourseSyllabus from "@/ui/components/CourseDetails/CourseSyllabus";
 import CourseInstructor from "@/ui/components/CourseDetails/CourseInstructor";
-import CourseReviews from "@/ui/components/CourseDetails/CourseReviews";
+import CourseCommunityTabs from "@/ui/components/CourseDetails/CourseCommunityTabs";
+import CourseAnnouncements from "@/ui/components/CourseDetails/CourseAnnouncements";
 import { ICourseInstructor } from "@/typescript/interface/course.interface";
 import { sToast } from "@/components/ui/alert/stoast";
 
@@ -164,8 +165,19 @@ export default function CourseDetailsPage() {
       {/* Instructor Profile Card */}
       <CourseInstructor instructor={instructorData} />
 
-      {/* Student Reviews & Feedback */}
-      <CourseReviews courseId={course._id || id} />
+      {/* Course Announcements */}
+      <CourseAnnouncements
+        courseId={course._id || id}
+        instructorName={instructorData?.name}
+      />
+
+      {/* Student Reviews & Course Q&A Tabs */}
+      <CourseCommunityTabs
+        courseId={course._id || id}
+        isEnrolled={Boolean(enrollmentData?.isEnrolled)}
+        isInstructor={Boolean(enrollmentData?.isInstructor)}
+        onEnroll={handleEnroll}
+      />
     </Box>
   );
 }

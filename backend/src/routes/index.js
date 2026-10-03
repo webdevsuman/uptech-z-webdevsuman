@@ -10,6 +10,7 @@ import announcementRouter from "./announcement.routes.js";
 import enrollmentRouter from "./enrollment.routes.js";
 import wishlistRouter from "./wishlist.routes.js";
 import reviewRouter from "./review.routes.js";
+import qnaRouter from "./qna.routes.js";
 
 const apiRouter = Router();
 
@@ -23,6 +24,7 @@ apiRouter.use("/announcements", announcementRouter);
 apiRouter.use("/enrollments", enrollmentRouter);
 apiRouter.use("/wishlist", wishlistRouter);
 apiRouter.use("/reviews", reviewRouter);
+apiRouter.use("/qna", qnaRouter);
 
 //Admin
 apiRouter.use("/users", adminUserRouter);

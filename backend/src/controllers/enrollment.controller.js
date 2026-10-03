@@ -46,10 +46,15 @@ class EnrollmentController {
         });
       }
 
+      const pricePaid =
+        typeof course.price === "number"
+          ? course.price
+          : (course.price?.amount || 0);
+
       const enrollment = await Enrollment.create({
         student: studentId,
         course: courseId,
-        pricePaid: course.price?.amount || 0,
+        pricePaid,
       });
 
       return res.status(httpStatusCodes.CREATED).json({

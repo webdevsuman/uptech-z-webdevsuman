@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 import Course from "../models/frontend/course.model.js";
 import Category from "../models/frontend/category.model.js";
+import Enrollment from "../models/frontend/enrollment.model.js";
+import QnA from "../models/frontend/qna.model.js";
 import { deleteFromCloudinary } from "../config/cloudinary.js";
 import httpStatusCodes from "../utils/httpStatusCodes.js";
 import logger from "../utils/logger.js";
@@ -298,6 +300,87 @@ class CourseController {
       return res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: error.message,
+      });
+    }
+  }
+
+  // 4.1 Instructor: Get overall dashboard stats
+  async getInstructorDashboardStats(req, res) {
+    try {
+      const instructorId = req.user._id;
+
+      // 1. Fetch courses owned by the instructor
+      const courses = await Course.find({ instructor: instructorId }).select(
+        "_id status averageRating rating reviewsCount"
+      );
+      const courseIds = courses.map((c) => c._id);
+
+      const totalCourses = courses.length;
+      const activeCourses = courses.filter((c) => c.status === "published").length;
+      const underReviewCourses = courses.filter(
+        (c) => c.status === "under_review" || c.status === "pending"
+      ).length;
+      const draftCourses = courses.filter((c) => c.status === "draft").length;
+
+      // 2. Aggregate Enrollments for these courses
+      const enrollmentStats = await Enrollment.aggregate([
+        { $match: { course: { $in: courseIds } } },
+        {
+          $group: {
+            _id: null,
+            uniqueStudents: { $addToSet: "$student" },
+            totalEnrollments: { $sum: 1 },
+            totalEarnings: { $sum: "$pricePaid" },
+          },
+        },
+      ]);
+
+      const totalStudents = enrollmentStats[0]?.uniqueStudents?.length || 0;
+      const totalEnrollments = enrollmentStats[0]?.totalEnrollments || 0;
+      const totalEarnings = enrollmentStats[0]?.totalEarnings || 0;
+
+      // 3. Calculate average rating
+      let avgRating = 0;
+      const ratedCourses = courses.filter(
+        (c) => (c.averageRating || c.rating || 0) > 0
+      );
+      if (ratedCourses.length > 0) {
+        const sumRating = ratedCourses.reduce(
+          (acc, c) => acc + (c.averageRating || c.rating || 0),
+          0
+        );
+        avgRating = Number((sumRating / ratedCourses.length).toFixed(1));
+      }
+
+      // 4. Count unanswered questions across instructor's courses
+      const unansweredQnACount = await QnA.countDocuments({
+        course: { $in: courseIds },
+        $or: [
+          { answers: { $size: 0 } },
+          { "answers.isInstructor": { $ne: true } },
+        ],
+      });
+
+      return res.status(httpStatusCodes.OK).json({
+        success: true,
+        data: {
+          totalStudents,
+          totalEnrollments,
+          totalCourses,
+          activeCourses,
+          underReviewCourses,
+          draftCourses,
+          totalEarnings,
+          averageRating: avgRating,
+          unansweredQnACount,
+        },
+      });
+    } catch (error) {
+      logger.error(`getInstructorDashboardStats error: ${error.message}`);
+      return res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: "Failed to fetch instructor dashboard statistics",
+        error: error.message,
       });
     }
   }

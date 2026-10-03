@@ -5,10 +5,17 @@ export interface IAnnouncementCourse {
   thumbnail?: string | { url: string; public_id?: string };
 }
 
+export interface IAnnouncementInstructor {
+  _id: string;
+  name: string;
+  profilePicture?: string;
+  email?: string;
+}
+
 export interface IAnnouncement {
   _id: string;
   id?: string;
-  instructor: string;
+  instructor: IAnnouncementInstructor | string;
   course: IAnnouncementCourse | string;
   title: string;
   content: string;

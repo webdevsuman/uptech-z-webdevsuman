@@ -27,6 +27,7 @@ export const endpoints = {
     list: "courses",
     create: "courses",
     instructorList: "courses/instructor",
+    instructorStats: "courses/instructor/stats",
     featured: "courses/featured",
     trending: "courses/trending",
     details: (id: string) => `courses/${id}`,
@@ -56,6 +57,7 @@ export const endpoints = {
   },
   announcements: {
     list: "announcements",
+    public: "announcements/public",
     create: "announcements",
     update: (id: string) => `announcements/${id}`,
     delete: (id: string) => `announcements/${id}`,
@@ -75,5 +77,12 @@ export const endpoints = {
     toggle: "wishlist/toggle",
     status: (courseId: string) => `wishlist/status/${courseId}`,
     my: "wishlist/my",
+  },
+  qna: {
+    courseQuestions: (courseId: string) => `qna/course/${courseId}`,
+    instructorQuestions: "qna/instructor",
+    ask: "qna",
+    reply: (questionId: string) => `qna/${questionId}/reply`,
+    delete: (questionId: string) => `qna/${questionId}`,
   },
 };

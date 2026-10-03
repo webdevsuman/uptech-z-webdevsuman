@@ -25,9 +25,10 @@ import { sToast } from "@/components/ui/alert/stoast";
 
 interface CourseReviewsProps {
   courseId: string;
+  embedded?: boolean;
 }
 
-export default function CourseReviews({ courseId }: CourseReviewsProps) {
+export default function CourseReviews({ courseId, embedded = false }: CourseReviewsProps) {
   const { user } = useAuth();
   const isAuthenticated = Boolean(user);
 
@@ -63,21 +64,13 @@ export default function CourseReviews({ courseId }: CourseReviewsProps) {
     distributionPercentages: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
   };
 
-  return (
-    <div className="md:px-24 px-5 max-w-7xl mx-auto my-8">
-      <Card
-        elevation={0}
-        sx={{
-          border: "1px solid",
-          borderColor: "divider",
-          borderRadius: 3,
-          p: 3,
-        }}
-      >
-        <CardContent sx={{ p: 0 }}>
-          <Typography variant="h6" sx={{ fontWeight: 800, mb: 3, color: "#1c1d1f" }}>
-            Student Feedback & Reviews
-          </Typography>
+  const reviewBody = (
+    <>
+      {!embedded && (
+        <Typography variant="h6" sx={{ fontWeight: 800, mb: 3, color: "#1c1d1f" }}>
+          Student Feedback & Reviews
+        </Typography>
+      )}
 
           {/* Rating Summary Header with Distribution Bars */}
           {isLoadingReviews ? (
@@ -155,7 +148,25 @@ export default function CourseReviews({ courseId }: CourseReviewsProps) {
               ))}
             </div>
           )}
-        </CardContent>
+    </>
+  );
+
+  if (embedded) {
+    return <Box sx={{ mt: 1 }}>{reviewBody}</Box>;
+  }
+
+  return (
+    <div className="md:px-24 px-5 max-w-7xl mx-auto my-8">
+      <Card
+        elevation={0}
+        sx={{
+          border: "1px solid",
+          borderColor: "divider",
+          borderRadius: 3,
+          p: 3,
+        }}
+      >
+        <CardContent sx={{ p: 0 }}>{reviewBody}</CardContent>
       </Card>
     </div>
   );

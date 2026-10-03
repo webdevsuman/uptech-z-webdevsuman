@@ -22,3 +22,40 @@ export const useInstructorCourses = () => {
     },
   });
 };
+
+export interface IInstructorDashboardStats {
+  totalStudents: number;
+  totalEnrollments: number;
+  totalCourses: number;
+  activeCourses: number;
+  underReviewCourses: number;
+  draftCourses: number;
+  totalEarnings: number;
+  averageRating: number;
+  unansweredQnACount: number;
+}
+
+export const useInstructorDashboardStats = () => {
+  return useQuery<IInstructorDashboardStats>({
+    queryKey: [CourseQueryEnum.InstructorStats],
+    queryFn: async () => {
+      const response = await api.get<{
+        success: boolean;
+        data: IInstructorDashboardStats;
+      }>(endpoints.courses.instructorStats);
+      return (
+        response.data ?? {
+          totalStudents: 0,
+          totalEnrollments: 0,
+          totalCourses: 0,
+          activeCourses: 0,
+          underReviewCourses: 0,
+          draftCourses: 0,
+          totalEarnings: 0,
+          averageRating: 0,
+          unansweredQnACount: 0,
+        }
+      );
+    },
+  });
+};

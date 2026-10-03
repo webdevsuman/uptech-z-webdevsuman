@@ -11,10 +11,12 @@ export enum CourseQueryEnum {
   FeaturedCourses = "featured-courses",
   TrendingCourses = "trending-courses",
   CourseDetails = "course-details",
+  InstructorStats = "instructor-stats",
 }
 
 export enum AnnouncementQueryEnum {
   Announcements = "announcements",
+  PublicAnnouncements = "public-announcements",
 }
 
 export enum ReviewQueryEnum {
@@ -31,4 +33,9 @@ export enum EnrollmentQueryEnum {
 export enum WishlistQueryEnum {
   WishlistStatus = "wishlist-status",
   MyWishlist = "my-wishlist",
+}
+
+export enum QnAQueryEnum {
+  CourseQuestions = "course-questions",
+  InstructorQuestions = "instructor-questions",
 }

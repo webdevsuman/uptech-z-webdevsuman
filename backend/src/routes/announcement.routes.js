@@ -11,7 +11,10 @@ import {
 
 const announcementRouter = Router();
 
-// All announcement endpoints require authentication and instructor permissions
+// Public: Get published course announcements for homepage & visitors
+announcementRouter.get("/public", announcementController.getPublicAnnouncements);
+
+// All instructor announcement endpoints require authentication and permissions
 announcementRouter.use(authMiddleware);
 announcementRouter.use(checkPermission(PERMISSIONS.COURSE_UPDATE));
 

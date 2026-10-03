@@ -29,6 +29,25 @@ export const useInstructorAnnouncements = (courseId?: string) => {
   });
 };
 
+export interface PublicAnnouncementsParams {
+  courseId?: string;
+  limit?: number;
+}
+
+export const usePublicAnnouncements = (params?: PublicAnnouncementsParams) => {
+  return useQuery<IAnnouncement[]>({
+    queryKey: [AnnouncementQueryEnum.PublicAnnouncements, params],
+    queryFn: async () => {
+      const response = await api.get<AnnouncementApiResponse<IAnnouncement[]>>(
+        endpoints.announcements.public,
+        params ? { params } : undefined
+      );
+      return response.data ?? [];
+    },
+    enabled: params?.courseId !== undefined ? Boolean(params.courseId) : true,
+  });
+};
+
 export const useCreateAnnouncement = () => {
   const queryClient = useQueryClient();
 

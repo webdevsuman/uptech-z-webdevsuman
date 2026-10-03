@@ -32,6 +32,34 @@ class AnnouncementController {
     }
   }
 
+  // Public endpoint for homepage & public course notices
+  async getPublicAnnouncements(req, res) {
+    try {
+      const { courseId, limit = 8 } = req.query;
+      const query = {};
+      if (courseId && mongoose.Types.ObjectId.isValid(courseId)) {
+        query.course = courseId;
+      }
+
+      const announcements = await Announcement.find(query)
+        .populate("course", "title thumbnail")
+        .populate("instructor", "name profilePicture email")
+        .sort({ createdAt: -1 })
+        .limit(Number(limit));
+
+      return res.status(httpStatusCodes.OK).json({
+        success: true,
+        data: announcements,
+      });
+    } catch (error) {
+      logger.error(`getPublicAnnouncements error: ${error.message}`);
+      return res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: error.message || "Failed to fetch public announcements",
+      });
+    }
+  }
+
   async createAnnouncement(req, res) {
     try {
       const instructorId = req.user._id;

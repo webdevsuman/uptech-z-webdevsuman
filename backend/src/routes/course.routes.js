@@ -38,6 +38,14 @@ courseRouter.get(
   courseController.getInstructorCourses,
 );
 
+// 4.01 Instructor: dashboard statistics
+courseRouter.get(
+  "/instructor/stats",
+  authMiddleware,
+  checkPermission(PERMISSIONS.COURSE_CREATE),
+  courseController.getInstructorDashboardStats,
+);
+
 // 4.1 Admin: list all courses (draft, review, published, rejected)
 courseRouter.get(
   "/admin",
