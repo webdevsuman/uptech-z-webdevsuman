@@ -55,3 +55,15 @@ export interface CreateReplyPayload {
   questionId: string;
   message: string;
 }
+
+export interface QnANewQuestionSocketPayload {
+  question: IQnAQuestion;
+  courseTitle: string;
+  studentName: string;
+  unansweredCount: number;
+}
+
+export interface QnACountsUpdatedSocketPayload {
+  courseId?: string;
+  unansweredCount: number;
+}

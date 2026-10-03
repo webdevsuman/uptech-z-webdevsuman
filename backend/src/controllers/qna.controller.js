@@ -4,6 +4,7 @@ import Course from "../models/frontend/course.model.js";
 import Enrollment from "../models/frontend/enrollment.model.js";
 import httpStatusCodes from "../utils/httpStatusCodes.js";
 import logger from "../utils/logger.js";
+import { emitToUser } from "../socket/index.js";
 
 /**
  * Helper to verify if a user has access to view/participate in course Q&A.
@@ -211,6 +212,38 @@ class QnAController {
         "name profilePicture email"
       );
 
+      // Real-time notification to the course instructor
+      if (access.course?.instructor) {
+        try {
+          const instructorId = access.course.instructor.toString();
+          const instructorCourses = await Course.find({ instructor: instructorId }).select("_id");
+          const instructorCourseIds = instructorCourses.map((c) => c._id);
+
+          const unansweredCount = await QnA.countDocuments({
+            course: { $in: instructorCourseIds },
+            $or: [
+              { answers: { $size: 0 } },
+              { "answers.isInstructor": { $ne: true } },
+            ],
+          });
+
+          const courseDoc = await Course.findById(courseId).select("title");
+
+          emitToUser(instructorId, "qna:new_question", {
+            question: populatedQuestion,
+            courseTitle: courseDoc?.title || "Course",
+            studentName: req.user.name || "Student",
+            unansweredCount,
+          });
+
+          logger.info(
+            `Emitted qna:new_question to instructor ${instructorId} (unansweredCount: ${unansweredCount})`
+          );
+        } catch (emitErr) {
+          logger.error(`Error emitting qna:new_question: ${emitErr.message}`);
+        }
+      }
+
       return res.status(httpStatusCodes.CREATED).json({
         success: true,
         message: "Question posted successfully",
@@ -269,6 +302,29 @@ class QnAController {
       const updatedQuestion = await QnA.findById(question._id)
         .populate("user", "name profilePicture email")
         .populate("answers.user", "name profilePicture email");
+
+      // If reply is from instructor or affects counts, emit updated counts
+      if (access.course?.instructor) {
+        try {
+          const instructorId = access.course.instructor.toString();
+          const instructorCourses = await Course.find({ instructor: instructorId }).select("_id");
+          const instructorCourseIds = instructorCourses.map((c) => c._id);
+
+          const unansweredCount = await QnA.countDocuments({
+            course: { $in: instructorCourseIds },
+            $or: [
+              { answers: { $size: 0 } },
+              { "answers.isInstructor": { $ne: true } },
+            ],
+          });
+
+          emitToUser(instructorId, "qna:counts_updated", {
+            unansweredCount,
+          });
+        } catch (emitErr) {
+          logger.error(`Error emitting qna:counts_updated: ${emitErr.message}`);
+        }
+      }
 
       return res.status(httpStatusCodes.OK).json({
         success: true,

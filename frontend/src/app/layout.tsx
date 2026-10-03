@@ -5,6 +5,7 @@ import Wrapper from "../../layout/wrapper/Wrapper";
 import TanstackProvider from "@/lib/TanstackProvider";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import { AuthProvider } from "@/context/AuthContext";
+import { SocketProvider } from "@/context/SocketContext";
 import { Toaster } from "sonner";
 
 const geistSans = Geist({
@@ -36,8 +37,10 @@ export default function RootLayout({
         <AppRouterCacheProvider options={{ enableCssLayer: true }}>
           <TanstackProvider>
             <AuthProvider>
-              <Toaster richColors position="top-right" />
-              <Wrapper>{children}</Wrapper>
+              <SocketProvider>
+                <Toaster richColors position="top-right" />
+                <Wrapper>{children}</Wrapper>
+              </SocketProvider>
             </AuthProvider>
           </TanstackProvider>
         </AppRouterCacheProvider>

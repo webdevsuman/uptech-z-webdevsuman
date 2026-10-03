@@ -95,8 +95,17 @@ export const emitToAdmins = (event, payload) => {
   io.to("admin-notifications").emit(event, payload);
 };
 
+export const emitToUser = (userId, event, payload) => {
+  if (!io || !userId) {
+    logger.warn(`Cannot emit "${event}" to user: Socket.io not initialized or missing userId`);
+    return;
+  }
+  io.to(`user:${userId.toString()}`).emit(event, payload);
+};
+
 export default {
   initSocket,
   getIO,
   emitToAdmins,
+  emitToUser,
 };

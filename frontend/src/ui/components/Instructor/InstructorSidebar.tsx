@@ -26,6 +26,7 @@ import {
   Person as PersonIcon,
   School as SchoolIcon,
 } from "@mui/icons-material";
+import { useInstructorQuestions } from "@/hooks/react-query/useQnA";
 
 const DRAWER_WIDTH = 250;
 
@@ -54,6 +55,8 @@ export default function InstructorSidebar({
   onClose,
 }: InstructorSidebarProps) {
   const pathname = usePathname();
+  const { data: qnaData } = useInstructorQuestions({ limit: 1 });
+  const unansweredCount = qnaData?.counts?.unanswered ?? 0;
 
   const drawerContent = (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -69,13 +72,7 @@ export default function InstructorSidebar({
         }}
       >
         <Box component={Link} href="/" sx={{ display: "flex", alignItems: "center" }}>
-          <Image
-            src="/Logo.svg"
-            alt="UpTech-Z Logo"
-            width={200}
-            height={50}
-            priority
-          />
+          <Image src="/Logo.svg" alt="UpTech-Z Logo" width={200} height={50} priority />
         </Box>
         <Chip
           label="Instructor"
@@ -90,14 +87,7 @@ export default function InstructorSidebar({
       <Box sx={{ flex: 1, py: 2, px: 1.5, overflowY: "auto" }}>
         <Typography
           variant="caption"
-          sx={{
-            px: 2,
-            mb: 1,
-            display: "block",
-            fontWeight: 700,
-            letterSpacing: 0.5,
-            color: "text.secondary",
-          }}
+          sx={{ px: 2, mb: 1, display: "block", fontWeight: 700, letterSpacing: 0.5, color: "text.secondary" }}
         >
           MANAGEMENT
         </Typography>
@@ -107,6 +97,7 @@ export default function InstructorSidebar({
             const isActive =
               pathname === item.href ||
               (item.href !== "/instructor/dashboard" && pathname?.startsWith(item.href));
+            const isQA = item.href === "/instructor/qa";
 
             return (
               <ListItem key={item.href} disablePadding sx={{ mb: 0.5 }}>
@@ -125,22 +116,37 @@ export default function InstructorSidebar({
                           ? "rgba(86, 36, 208, 0.2)"
                           : "rgba(86, 36, 208, 0.08)",
                       color: "primary.main",
-                      "& .MuiListItemIcon-root": {
-                        color: "primary.main",
-                      },
+                      "& .MuiListItemIcon-root": { color: "primary.main" },
                     },
                   }}
                 >
                   <ListItemIcon
-                    sx={{
-                      minWidth: 36,
-                      color: isActive ? "primary.main" : "text.secondary",
-                    }}
+                    sx={{ minWidth: 36, color: isActive ? "primary.main" : "text.secondary" }}
                   >
                     {item.icon}
                   </ListItemIcon>
                   <ListItemText
-                    primary={item.name}
+                    primary={
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                        <span>{item.name}</span>
+                        {isQA && unansweredCount > 0 && (
+                          <Chip
+                            label={unansweredCount > 99 ? "99+" : unansweredCount}
+                            size="small"
+                            color="error"
+                            sx={{
+                              height: 20,
+                              minWidth: 20,
+                              fontSize: "0.72rem",
+                              fontWeight: 700,
+                              px: 0.5,
+                              ml: 1,
+                              borderRadius: "10px",
+                            }}
+                          />
+                        )}
+                      </Box>
+                    }
                     slotProps={{
                       primary: {
                         sx: {
@@ -169,13 +175,7 @@ export default function InstructorSidebar({
           variant="outlined"
           color="inherit"
           startIcon={<SchoolIcon sx={{ fontSize: "1.1rem" }} />}
-          sx={{
-            textTransform: "none",
-            fontSize: "0.8rem",
-            py: 1,
-            fontWeight: 600,
-            borderColor: "divider",
-          }}
+          sx={{ textTransform: "none", fontSize: "0.8rem", py: 1, fontWeight: 600, borderColor: "divider" }}
         >
           Switch to Student View
         </Button>
@@ -183,41 +183,31 @@ export default function InstructorSidebar({
     </Box>
   );
 
+  const paperBaseSx = {
+    boxSizing: "border-box" as const,
+    width: DRAWER_WIDTH,
+    bgcolor: "background.paper",
+    backgroundImage: "none",
+  };
+
   return (
     <Box component="nav" sx={{ width: { lg: DRAWER_WIDTH }, flexShrink: { lg: 0 } }}>
-      {/* Mobile Temporary Drawer */}
       <Drawer
         variant="temporary"
         open={mobileOpen}
         onClose={onClose}
         ModalProps={{ keepMounted: true }}
-        sx={{
-          display: { xs: "block", lg: "none" },
-          "& .MuiDrawer-paper": {
-            boxSizing: "border-box",
-            width: DRAWER_WIDTH,
-            bgcolor: "background.paper",
-            backgroundImage: "none",
-          },
-        }}
+        sx={{ display: { xs: "block", lg: "none" }, "& .MuiDrawer-paper": paperBaseSx }}
       >
         {drawerContent}
       </Drawer>
 
-      {/* Desktop Persistent Drawer */}
       <Drawer
         variant="permanent"
         open
         sx={{
           display: { xs: "none", lg: "block" },
-          "& .MuiDrawer-paper": {
-            boxSizing: "border-box",
-            width: DRAWER_WIDTH,
-            borderRight: "1px solid",
-            borderColor: "divider",
-            bgcolor: "background.paper",
-            backgroundImage: "none",
-          },
+          "& .MuiDrawer-paper": { ...paperBaseSx, borderRight: "1px solid", borderColor: "divider" },
         }}
       >
         {drawerContent}
