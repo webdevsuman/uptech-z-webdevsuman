@@ -3,6 +3,8 @@ import Course from "../models/frontend/course.model.js";
 import Category from "../models/frontend/category.model.js";
 import Enrollment from "../models/frontend/enrollment.model.js";
 import QnA from "../models/frontend/qna.model.js";
+import Notification from "../models/notification.model.js";
+import { emitToAdmins } from "../socket/index.js";
 import { deleteFromCloudinary } from "../config/cloudinary.js";
 import httpStatusCodes from "../utils/httpStatusCodes.js";
 import logger from "../utils/logger.js";
@@ -143,10 +145,7 @@ class CourseController {
       const { id } = req.params;
       const course = await Course.findById(id)
         .populate("category", "name icon")
-        .populate(
-          "instructor",
-          "name email bio qualification profilePicture"
-        );
+        .populate("instructor", "name email bio qualification profilePicture");
 
       if (!course) {
         return res.status(httpStatusCodes.NOT_FOUND).json({
@@ -174,7 +173,8 @@ class CourseController {
         });
       }
 
-      const instructorId = course.instructor?._id?.toString() || course.instructor?.toString();
+      const instructorId =
+        course.instructor?._id?.toString() || course.instructor?.toString();
       const isOwner = instructorId === req.user._id.toString();
       const isAdmin = req.user.role?.name === "super-admin";
       if (!isOwner && !isAdmin) {
@@ -245,7 +245,8 @@ class CourseController {
         });
       }
 
-      const instructorId = course.instructor?._id?.toString() || course.instructor?.toString();
+      const instructorId =
+        course.instructor?._id?.toString() || course.instructor?.toString();
       const isOwner = instructorId === req.user._id.toString();
       const isAdmin = req.user.role?.name === "super-admin";
       if (!isOwner && !isAdmin) {
@@ -265,10 +266,44 @@ class CourseController {
         };
       }
 
+      const isSubmittingForReview =
+        updateData.status === "under_review" &&
+        course.status !== "under_review";
+
       const updatedCourse = await Course.findByIdAndUpdate(id, updateData, {
         new: true,
         runValidators: true,
       }).populate("category", "name icon");
+
+      // Notify admins via socket & persist notification if submitted for review
+      if (isSubmittingForReview) {
+        try {
+          const instructorName = req.user.name || "Instructor";
+          const courseTitle = updatedCourse?.title || course.title;
+
+          const notif = await Notification.create({
+            recipientRole: "super-admin",
+            type: "course_under_review",
+            title: "New Course Under Review",
+            message: `${instructorName} submitted "${courseTitle}" for quality moderation.`,
+            data: {
+              courseId: updatedCourse._id,
+              courseTitle,
+              instructorId: req.user._id,
+              instructorName,
+              instructorAvatar: req.user.profilePicture || "",
+              link: "/courses/list",
+            },
+          });
+
+          emitToAdmins("notification:new", notif);
+          logger.info(`Emitted notification:new for course: ${courseTitle}`);
+        } catch (notifErr) {
+          logger.error(
+            `Failed to create or emit course review notification: ${notifErr.message}`,
+          );
+        }
+      }
 
       return res.status(httpStatusCodes.OK).json({
         success: true,
@@ -311,14 +346,16 @@ class CourseController {
 
       // 1. Fetch courses owned by the instructor
       const courses = await Course.find({ instructor: instructorId }).select(
-        "_id status averageRating rating reviewsCount"
+        "_id status averageRating rating reviewsCount",
       );
       const courseIds = courses.map((c) => c._id);
 
       const totalCourses = courses.length;
-      const activeCourses = courses.filter((c) => c.status === "published").length;
+      const activeCourses = courses.filter(
+        (c) => c.status === "published",
+      ).length;
       const underReviewCourses = courses.filter(
-        (c) => c.status === "under_review" || c.status === "pending"
+        (c) => c.status === "under_review" || c.status === "pending",
       ).length;
       const draftCourses = courses.filter((c) => c.status === "draft").length;
 
@@ -342,12 +379,12 @@ class CourseController {
       // 3. Calculate average rating
       let avgRating = 0;
       const ratedCourses = courses.filter(
-        (c) => (c.averageRating || c.rating || 0) > 0
+        (c) => (c.averageRating || c.rating || 0) > 0,
       );
       if (ratedCourses.length > 0) {
         const sumRating = ratedCourses.reduce(
           (acc, c) => acc + (c.averageRating || c.rating || 0),
-          0
+          0,
         );
         avgRating = Number((sumRating / ratedCourses.length).toFixed(1));
       }
@@ -474,7 +511,11 @@ class CourseController {
         matchStage.status = status;
       }
 
-      if (category && category !== "all" && mongoose.isValidObjectId(category)) {
+      if (
+        category &&
+        category !== "all" &&
+        mongoose.isValidObjectId(category)
+      ) {
         matchStage.category = new mongoose.Types.ObjectId(category);
       }
 
@@ -676,7 +717,7 @@ class CourseController {
           await deleteFromCloudinary(course.thumbnail.public_id, "image");
         } catch (cloudErr) {
           logger.warn(
-            `Failed to delete course thumbnail from Cloudinary: ${cloudErr.message}`
+            `Failed to delete course thumbnail from Cloudinary: ${cloudErr.message}`,
           );
         }
       }
@@ -723,7 +764,10 @@ class CourseController {
 
       const instructorId =
         course.instructor?._id?.toString() || course.instructor?.toString();
-      if (instructorId !== req.user._id.toString() && req.user.role?.name !== "super-admin") {
+      if (
+        instructorId !== req.user._id.toString() &&
+        req.user.role?.name !== "super-admin"
+      ) {
         return res.status(httpStatusCodes.FORBIDDEN).json({
           success: false,
           message: "Unauthorized to modify this course",
@@ -768,7 +812,10 @@ class CourseController {
 
       const instructorId =
         course.instructor?._id?.toString() || course.instructor?.toString();
-      if (instructorId !== req.user._id.toString() && req.user.role?.name !== "super-admin") {
+      if (
+        instructorId !== req.user._id.toString() &&
+        req.user.role?.name !== "super-admin"
+      ) {
         return res.status(httpStatusCodes.FORBIDDEN).json({
           success: false,
           message: "Unauthorized to modify this course",
@@ -817,7 +864,10 @@ class CourseController {
 
       const instructorId =
         course.instructor?._id?.toString() || course.instructor?.toString();
-      if (instructorId !== req.user._id.toString() && req.user.role?.name !== "super-admin") {
+      if (
+        instructorId !== req.user._id.toString() &&
+        req.user.role?.name !== "super-admin"
+      ) {
         return res.status(httpStatusCodes.FORBIDDEN).json({
           success: false,
           message: "Unauthorized to modify this course",
@@ -892,7 +942,10 @@ class CourseController {
 
       const instructorId =
         course.instructor?._id?.toString() || course.instructor?.toString();
-      if (instructorId !== req.user._id.toString() && req.user.role?.name !== "super-admin") {
+      if (
+        instructorId !== req.user._id.toString() &&
+        req.user.role?.name !== "super-admin"
+      ) {
         return res.status(httpStatusCodes.FORBIDDEN).json({
           success: false,
           message: "Unauthorized to modify this course",
@@ -947,7 +1000,10 @@ class CourseController {
 
       const instructorId =
         course.instructor?._id?.toString() || course.instructor?.toString();
-      if (instructorId !== req.user._id.toString() && req.user.role?.name !== "super-admin") {
+      if (
+        instructorId !== req.user._id.toString() &&
+        req.user.role?.name !== "super-admin"
+      ) {
         return res.status(httpStatusCodes.FORBIDDEN).json({
           success: false,
           message: "Unauthorized to modify this course",
@@ -1023,7 +1079,10 @@ class CourseController {
 
       const instructorId =
         course.instructor?._id?.toString() || course.instructor?.toString();
-      if (instructorId !== req.user._id.toString() && req.user.role?.name !== "super-admin") {
+      if (
+        instructorId !== req.user._id.toString() &&
+        req.user.role?.name !== "super-admin"
+      ) {
         return res.status(httpStatusCodes.FORBIDDEN).json({
           success: false,
           message: "Unauthorized to modify this course",
@@ -1104,7 +1163,10 @@ class CourseController {
 
       const instructorId =
         course.instructor?._id?.toString() || course.instructor?.toString();
-      if (instructorId !== req.user._id.toString() && req.user.role?.name !== "super-admin") {
+      if (
+        instructorId !== req.user._id.toString() &&
+        req.user.role?.name !== "super-admin"
+      ) {
         return res.status(httpStatusCodes.FORBIDDEN).json({
           success: false,
           message: "Unauthorized to modify this course",
@@ -1127,7 +1189,8 @@ class CourseController {
         });
       }
 
-      const fileExtension = req.file.originalname.split(".").pop()?.toLowerCase() || "pdf";
+      const fileExtension =
+        req.file.originalname.split(".").pop()?.toLowerCase() || "pdf";
 
       lecture.resources.push({
         title: (title && title.trim()) || req.file.originalname,
@@ -1167,7 +1230,10 @@ class CourseController {
 
       const instructorId =
         course.instructor?._id?.toString() || course.instructor?.toString();
-      if (instructorId !== req.user._id.toString() && req.user.role?.name !== "super-admin") {
+      if (
+        instructorId !== req.user._id.toString() &&
+        req.user.role?.name !== "super-admin"
+      ) {
         return res.status(httpStatusCodes.FORBIDDEN).json({
           success: false,
           message: "Unauthorized to modify this course",

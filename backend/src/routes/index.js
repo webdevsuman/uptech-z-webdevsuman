@@ -12,6 +12,7 @@ import wishlistRouter from "./wishlist.routes.js";
 import reviewRouter from "./review.routes.js";
 import qnaRouter from "./qna.routes.js";
 import analyticsRouter from "./analytics.routes.js";
+import notificationRouter from "./notification.routes.js";
 
 const apiRouter = Router();
 
@@ -32,5 +33,6 @@ apiRouter.use("/users", adminUserRouter);
 apiRouter.use("/categories", categoryRouter);
 apiRouter.use("/tags", tagRouter);
 apiRouter.use("/analytics", analyticsRouter);
+apiRouter.use("/notifications", notificationRouter);
 
 export default apiRouter;

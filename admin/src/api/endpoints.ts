@@ -61,6 +61,13 @@ export const endpoints = {
   analytics: {
     dashboard: 'analytics/dashboard',
   },
+  notifications: {
+    list: 'notifications',
+    markRead: (id: string) => `notifications/${id}/read`,
+    markAllRead: 'notifications/read-all',
+    delete: (id: string) => `notifications/${id}`,
+    deleteAll: 'notifications/clear-all',
+  },
   cms: {
     homepage: 'v2/homepage',
   },

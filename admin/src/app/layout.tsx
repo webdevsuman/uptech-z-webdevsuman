@@ -8,6 +8,7 @@ import { TanstackQueryProvider } from '@/context/TanstackQueryProvider';
 import { Toaster } from 'sonner';
 
 import { AuthProvider } from '@/context/AuthContext';
+import { SocketProvider } from '@/context/SocketContext';
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -25,8 +26,10 @@ export default function RootLayout({
         <ThemeProvider>
           <TanstackQueryProvider>
             <AuthProvider>
-              <SidebarProvider>{children}</SidebarProvider>
-              <Toaster position="top-right" richColors />
+              <SocketProvider>
+                <SidebarProvider>{children}</SidebarProvider>
+                <Toaster position="top-right" richColors />
+              </SocketProvider>
             </AuthProvider>
           </TanstackQueryProvider>
         </ThemeProvider>
